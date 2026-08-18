@@ -1,0 +1,152 @@
+<!-- templates/mantenimiento.html -->
+{% extends "crud_base.html" %}
+
+{% block title %}Mantenimiento{% endblock %}
+{% block page_title %}Gestión de Mantenimiento{% endblock %}
+{% block api_url %}/api/mantenimiento{% endblock %}
+
+{% block table_headers %}
+    <th>Máquina</th>
+    <th>Tipo</th>
+    <th>Fecha</th>
+    <th>Técnico</th>
+    <th>Descripción</th>
+    <th>Duración</th>
+    <th>Costo</th>
+    <th>Efectividad</th>
+{% endblock %}
+
+{% block form_fields %}
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Máquina</label>
+            <select class="form-select" name="maquina_id" id="maquinaSelect" required>
+                <option value="">Seleccionar...</option>
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Tipo</label>
+            <select class="form-select" name="tipo" required>
+                <option value="Preventivo">Preventivo</option>
+                <option value="Correctivo">Correctivo</option>
+                <option value="Predictivo">Predictivo</option>
+            </select>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Fecha</label>
+            <input type="datetime-local" class="form-control" name="fecha" required>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Técnico</label>
+            <input type="text" class="form-control" name="tecnico" required>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Duración (horas)</label>
+            <input type="number" step="0.1" class="form-control" name="duracion_horas" required>
+        </div>
+        <div class="col-md-12 mb-3">
+            <label class="form-label">Descripción</label>
+            <input type="text" class="form-control" name="descripcion" required>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Costo</label>
+            <input type="number" step="0.01" class="form-control" name="costo" value="0">
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Piezas Reemplazadas</label>
+            <input type="number" class="form-control" name="piezas_reemplazadas" value="0">
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Efectividad</label>
+            <select class="form-select" name="efectividad">
+                <option value="Alta">Alta</option>
+                <option value="Media">Media</option>
+                <option value="Baja">Baja</option>
+            </select>
+        </div>
+        <div class="col-md-12 mb-3">
+            <label class="form-label">Observaciones</label>
+            <textarea class="form-control" name="observaciones" rows="2"></textarea>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    async function llenarSelects() {
+        try {
+            const response = await fetch('/api/maquinas');
+            const maquinas = await response.json();
+            const select = document.getElementById('maquinaSelect');
+            select.innerHTML = '<option value="">Seleccionar...</option>' + 
+                maquinas.map(m => `<option value="${m._id}">${m.nombre}</option>`).join('');
+        } catch (error) {
+            console.error('Error cargando máquinas:', error);
+        }
+    }
+
+    function renderizarTabla(data) {
+        const tbody = document.getElementById('tableBody');
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No hay registros de mantenimiento</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = data.map(item => `
+            <tr>
+                <td><strong>${item.maquina_nombre || 'N/A'}</strong></td>
+                <td>
+                    <span class="badge ${item.tipo === 'Preventivo' ? 'bg-success' : item.tipo === 'Correctivo' ? 'bg-danger' : 'bg-info'}">
+                        ${item.tipo || 'N/A'}
+                    </span>
+                </td>
+                <td><small>${item.fecha ? new Date(item.fecha).toLocaleString('es-ES') : 'N/A'}</small></td>
+                <td>${item.tecnico || 'N/A'}</td>
+                <td><small>${item.descripcion || 'N/A'}</small></td>
+                <td>${item.duracion_horas?.toFixed(1) || 0}h</td>
+                <td>$${item.costo?.toFixed(2) || '0.00'}</td>
+                <td>
+                    <span class="badge ${item.efectividad === 'Alta' ? 'bg-success' : item.efectividad === 'Media' ? 'bg-warning' : 'bg-danger'}">
+                        ${item.efectividad || 'N/A'}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('${item._id}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('${item._id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function llenarFormulario(data) {
+        Object.keys(data).forEach(key => {
+            const input = document.querySelector(`[name="${key}"]`);
+            if (input) {
+                if (key === 'fecha' && data[key]) {
+                    const date = new Date(data[key]);
+                    if (!isNaN(date.getTime())) {
+                        input.value = date.toISOString().slice(0, 16);
+                    }
+                } else if (input.type === 'select-one') {
+                    const options = input.options;
+                    for (let i = 0; i < options.length; i++) {
+                        if (options[i].value == data[key]) {
+                            input.selectedIndex = i;
+                            break;
+                        }
+                    }
+                } else {
+                    input.value = data[key] || '';
+                }
+            }
+        });
+    }
+
+    console.log('✅ mantenimiento.html cargado correctamente');
+</script>
+{% endblock %}

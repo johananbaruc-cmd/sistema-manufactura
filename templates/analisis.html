@@ -1,0 +1,1589 @@
+<!-- templates/analisis.html -->
+{% extends "base.html" %}
+
+{% block title %}Análisis Avanzado{% endblock %}
+{% block page_title %}Centro de Análisis y Visualización{% endblock %}
+
+{% block content %}
+
+<!-- ==================== FILTROS ==================== -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-filter me-2"></i> Filtros de Análisis
+            </div>
+            <div class="card-body">
+                <form id="filtrosForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Inicio</label>
+                        <input type="date" class="form-control" id="fechaInicio" value="{{ fecha_inicio }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Fin</label>
+                        <input type="date" class="form-control" id="fechaFin" value="{{ fecha_fin }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Máquina</label>
+                        <select class="form-select" id="filtroMaquina">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Producto</label>
+                        <select class="form-select" id="filtroProducto">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="button" class="btn btn-primary" onclick="aplicarFiltros()">
+                            <i class="fas fa-search"></i> Aplicar Filtros
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="generarReportePDF()">
+                            <i class="fas fa-file-pdf"></i> Generar Reporte PDF
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="exportarExcel()">
+                            <i class="fas fa-file-excel"></i> Exportar Excel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== KPIs ==================== -->
+<div class="row" id="seccionKPIs">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon text-primary"><i class="fas fa-chart-line"></i></div>
+            <div class="stat-number" id="kpi-eficiencia">-</div>
+            <div class="stat-label">Eficiencia Global (%)</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon text-danger"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="stat-number" id="kpi-fallas">-</div>
+            <div class="stat-label">Total Fallas (Correctivos)</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon text-warning"><i class="fas fa-clock"></i></div>
+            <div class="stat-number" id="kpi-tiempo-muerto">-</div>
+            <div class="stat-label">Tiempo Muerto (horas)</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon text-success"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-number" id="kpi-calidad">-</div>
+            <div class="stat-label">Tasa de Calidad (%)</div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== CONTENIDO PARA PDF ==================== -->
+<div id="contenidoPDF" style="padding: 20px; background: white;">
+
+    <!-- Título del reporte (ya no se usa para el PDF, se deja oculto por si se imprime la página) -->
+    <div id="tituloReporte" style="text-align:center; padding:20px 0; border-bottom:3px solid #2c3e50; margin-bottom:25px;">
+        <h1 style="color:#2c3e50; font-size:28px; font-weight:bold; margin:0;">SISTEMA DE MANUFACTURA DE PLÁSTICOS</h1>
+        <h2 style="color:#3498db; font-size:18px; margin:5px 0;">Reporte de Análisis de Producción</h2>
+        <p style="color:#7f8c8d; font-size:12px; margin:5px 0;">
+            <span id="fechaReporte"></span> |
+            <span id="rangoFechasReporte"></span>
+        </p>
+        <p style="color:#95a5a6; font-size:11px; margin:0;">
+            Documento generado automáticamente - Análisis basado en datos históricos de producción
+        </p>
+    </div>
+
+<!-- ==================== GRÁFICAS PRINCIPALES ==================== -->
+
+<!-- Fila 1: Eficiencia por Línea + Fallas por Máquina -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card" style="border:1px solid #e0e0e0; border-radius:8px; overflow:hidden;">
+            <div class="card-header" style="background-color:#2c3e50; color:white; padding:10px 15px;">
+                <i class="fas fa-tachometer-alt me-2"></i>
+                <strong>1. Eficiencia por Línea de Producción</strong>
+                <span class="badge bg-info ms-2">% Eficiencia</span>
+            </div>
+            <div class="card-body" style="height: 300px; padding:15px;">
+                <canvas id="eficienciaLineaChart"></canvas>
+            </div>
+            <div class="card-footer text-muted small" id="interpretacionEficiencia" style="background-color:#f8f9fa; border-top:1px solid #e9ecef; padding:10px 15px;">
+                <i class="fas fa-lightbulb text-warning"></i>
+                <strong>Interpretación:</strong> La línea <strong id="nombreMejorLinea">-</strong> presenta la mayor eficiencia con <strong id="mejorEficiencia">-</strong>%,
+                superando el promedio de la planta. Este rendimiento se atribuye a la optimización de los parámetros de inyección y
+                la reducción de tiempos de cambio de molde en la producción de piezas plásticas.
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card" style="border:1px solid #e0e0e0; border-radius:8px; overflow:hidden;">
+            <div class="card-header" style="background-color:#c0392b; color:white; padding:10px 15px;">
+                <i class="fas fa-microchip me-2"></i>
+                <strong>2. Máquinas con Mayor Número de Fallas</strong>
+                <span class="badge bg-danger ms-2">Cantidad</span>
+            </div>
+            <div class="card-body" style="height: 300px; padding:15px;">
+                <canvas id="fallasMaquinaChart"></canvas>
+            </div>
+            <div class="card-footer text-muted small" id="interpretacionFallas" style="background-color:#f8f9fa; border-top:1px solid #e9ecef; padding:10px 15px;">
+                <i class="fas fa-lightbulb text-warning"></i>
+                <strong>Interpretación:</strong> La máquina <strong id="nombrePeorMaquina">-</strong> concentra el <strong id="porcentajeFallas">-</strong>% de las fallas totales.
+                Esto sugiere un desgaste prematuro en componentes críticos como tornillos de extrusión o sistemas hidráulicos,
+                típico en máquinas de inyección de plástico con alto ciclo de trabajo.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fila 2: Defectos por Producto + Productividad por Operador -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card" style="border:1px solid #e0e0e0; border-radius:8px; overflow:hidden;">
+            <div class="card-header" style="background-color:#f39c12; color:white; padding:10px 15px;">
+                <i class="fas fa-box me-2"></i>
+                <strong>3. Productos con Mayor Cantidad de Defectos</strong>
+                <span class="badge bg-warning ms-2">Cantidad</span>
+            </div>
+            <div class="card-body" style="height: 300px; padding:15px;">
+                <canvas id="defectosProductoChart"></canvas>
+            </div>
+            <div class="card-footer text-muted small" id="interpretacionDefectos" style="background-color:#f8f9fa; border-top:1px solid #e9ecef; padding:10px 15px;">
+                <i class="fas fa-lightbulb text-warning"></i>
+                <strong>Interpretación:</strong> El producto <strong id="nombrePeorProducto">-</strong> acumula <strong id="peorDefectos">-</strong> defectos,
+                principalmente marcas de flujo y burbujas. Se recomienda ajustar la temperatura del cilindro y la presión de inyección,
+                ya que estos parámetros son críticos para la calidad de piezas plásticas.
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card" style="border:1px solid #e0e0e0; border-radius:8px; overflow:hidden;">
+            <div class="card-header" style="background-color:#27ae60; color:white; padding:10px 15px;">
+                <i class="fas fa-user me-2"></i>
+                <strong>4. Productividad por Operador</strong>
+                <span class="badge bg-success ms-2">Unidades/Hora</span>
+            </div>
+            <div class="card-body" style="height: 300px; padding:15px;">
+                <canvas id="productividadOperadorChart"></canvas>
+            </div>
+            <div class="card-footer text-muted small" id="interpretacionProductividad" style="background-color:#f8f9fa; border-top:1px solid #e9ecef; padding:10px 15px;">
+                <i class="fas fa-lightbulb text-warning"></i>
+                <strong>Interpretación:</strong> El operador <strong id="nombreMejorOperador">-</strong> destaca con <strong id="mejorProductividad">-</strong> unidades/hora,
+                superando el promedio en un <strong id="diferenciaProductividad">-</strong>%. Su experiencia en el manejo de la máquina de inyección
+                y conocimiento de los parámetros del material (PVC, PET, Polietileno) son factores clave.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fila 3: Causas de Paro + Correlación -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card" style="border:1px solid #e0e0e0; border-radius:8px; overflow:hidden;">
+            <div class="card-header" style="background-color:#8e44ad; color:white; padding:10px 15px;">
+                <i class="fas fa-stop-circle me-2"></i>
+                <strong>5. Distribución de Causas de Paro</strong>
+                <span class="badge bg-danger ms-2">% y Cantidad</span>
+            </div>
+            <div class="card-body" style="height: 300px; padding:15px;">
+                <canvas id="causasParoChart"></canvas>
+            </div>
+            <div class="card-footer text-muted small" id="interpretacionParos" style="background-color:#f8f9fa; border-top:1px solid #e9ecef; padding:10px 15px;">
+                <i class="fas fa-lightbulb text-warning"></i>
+                <strong>Interpretación:</strong> La principal causa de paro es <strong id="nombrePrincipalParo">-</strong> con <strong id="principalParoCantidad">-</strong> ocurrencias.
+                En el contexto de plásticos, esto suele relacionarse con atascos de material, sobrecalentamiento o fallas en el sistema de enfriamiento,
+                que son críticos para mantener la calidad del producto.
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card" style="border:1px solid #e0e0e0; border-radius:8px; overflow:hidden;">
+            <div class="card-header" style="background-color:#2980b9; color:white; padding:10px 15px;">
+                <i class="fas fa-project-diagram me-2"></i>
+                <strong>6. Correlación: Temperatura vs Vibración</strong>
+                <span class="badge bg-primary ms-2">Dispersión</span>
+            </div>
+            <div class="card-body" style="height: 300px; padding:15px;">
+                <canvas id="correlacionChart"></canvas>
+            </div>
+            <div class="card-footer text-muted small" id="interpretacionCorrelacion" style="background-color:#f8f9fa; border-top:1px solid #e9ecef; padding:10px 15px;">
+                <i class="fas fa-lightbulb text-warning"></i>
+                <strong>Interpretación:</strong> Se observa una <strong>correlación positiva</strong> entre temperatura y vibración.
+                En máquinas de inyección de plástico, valores de <strong id="tempPromedio">-</strong>°C y <strong id="vibracionPromedio">-</strong> mm/s
+                sugieren que mantener estos parámetros dentro de rangos óptimos (temperatura 180-220°C, vibración &lt; 0.8 mm/s)
+                podría reducir significativamente los defectos y fallas prematuras.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fila 4: Predicción de Fallas + Clusters -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card" style="border:1px solid #e0e0e0; border-radius:8px; overflow:hidden;">
+            <div class="card-header" style="background-color:#1abc9c; color:white; padding:10px 15px;">
+                <i class="fas fa-robot me-2"></i>
+                <strong>7. Tendencias de Sensores - Predicción de Fallas</strong>
+                <span class="badge bg-info ms-2">Evolución</span>
+            </div>
+            <div class="card-body" style="height: 300px; padding:15px;">
+                <canvas id="prediccionFallasChart"></canvas>
+            </div>
+            <div class="card-footer text-muted small" id="interpretacionPrediccion" style="background-color:#f8f9fa; border-top:1px solid #e9ecef; padding:10px 15px;">
+                <i class="fas fa-lightbulb text-warning"></i>
+                <strong>Interpretación:</strong> Las tendencias muestran que la <strong>temperatura</strong> y <strong>vibración</strong> han aumentado <span id="tendenciaGeneral">progresivamente</span>.
+                Esto es un indicador temprano de desgaste en componentes críticos (ej. rodamientos, sellos, resistencias).
+                Se recomienda programar mantenimiento predictivo en las máquinas que muestran estas tendencias para evitar paros no programados.
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card" style="border:1px solid #e0e0e0; border-radius:8px; overflow:hidden;">
+            <div class="card-header" style="background-color:#9b59b6; color:white; padding:10px 15px;">
+                <i class="fas fa-layer-group me-2"></i>
+                <strong>8. Agrupación de Máquinas por Comportamiento (k-means)</strong>
+                <span class="badge bg-purple ms-2">Clusters</span>
+            </div>
+            <div class="card-body" style="height: 300px; padding:15px;">
+                <canvas id="clustersChart"></canvas>
+            </div>
+            <div class="card-footer text-muted small" id="interpretacionClusters" style="background-color:#f8f9fa; border-top:1px solid #e9ecef; padding:10px 15px;">
+                <i class="fas fa-lightbulb text-warning"></i>
+                <strong>Interpretación:</strong> Se agruparon las máquinas en <strong>3 clusters</strong> según su temperatura y vibración promedio (k-means).
+                El <strong>Cluster de Alto Riesgo</strong> incluye a <strong id="clusterAltoRiesgo">-</strong>, las cuales requieren atención prioritaria
+                en mantenimiento, posiblemente por su antigüedad o por el tipo de materiales que procesan (ej. PVC rígido, PET).
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fila: Mantenimiento Predictivo -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card" style="border:1px solid #e0e0e0; border-radius:8px; overflow:hidden;">
+            <div class="card-header" style="background-color:#d35400; color:white; padding:10px 15px;">
+                <i class="fas fa-heartbeat me-2"></i>
+                <strong>9. Mantenimiento Predictivo: Máquinas en Riesgo de Falla Próxima</strong>
+                <span class="badge bg-danger ms-2">Anticipación</span>
+            </div>
+            <div class="card-body" style="padding:15px;">
+                <p class="text-muted small mb-2">
+                    Una máquina se marca en riesgo cuando el promedio de sus últimas lecturas de temperatura
+                    y vibración supera simultáneamente el umbral de <strong>media + 1 desviación estándar</strong>
+                    de la planta — el mismo patrón de aviso temprano antes de una falla que describe el objetivo del proyecto.
+                </p>
+                <div id="riesgoPredictivo-container">
+                    <p class="text-muted">Cargando análisis de riesgo...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== GRÁFICA PERSONALIZADA ==================== -->
+<div class="row" id="seccionPersonalizada">
+    <div class="col-12 mb-4">
+        <div class="card" style="border:1px solid #e0e0e0; border-radius:8px; overflow:hidden;">
+            <div class="card-header" style="background-color:#16a085; color:white; padding:10px 15px;">
+                <i class="fas fa-chart-bar me-2"></i>
+                <strong>10. Gráfica Personalizada</strong>
+                <span class="badge bg-primary ms-2">Configurable</span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Gráfica</label>
+                            <select class="form-select" id="tipoGrafica">
+                                <option value="bar">Barras</option>
+                                <option value="line">Líneas</option>
+                                <option value="pie">Pastel</option>
+                                <option value="doughnut">Anillo</option>
+                                <option value="scatter">Dispersión</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Variable X</label>
+                            <select class="form-select" id="variableX">
+                                <option value="productos">Productos</option>
+                                <option value="maquinas">Máquinas</option>
+                                <option value="operadores">Operadores</option>
+                                <option value="fecha">Fecha</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Variable Y</label>
+                            <select class="form-select" id="variableY">
+                                <option value="produccion">Producción</option>
+                                <option value="defectos">Defectos</option>
+                                <option value="eficiencia">Eficiencia</option>
+                                <option value="tiempo">Tiempo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-primary" onclick="generarGraficaPersonalizada()">
+                            <i class="fas fa-chart-bar"></i> Generar Gráfica
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="limpiarPersonalizada()">
+                            <i class="fas fa-eraser"></i> Limpiar
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-3" style="height: 320px;">
+                    <canvas id="personalizadaChart"></canvas>
+                </div>
+                <div class="mt-2 text-muted small" id="interpretacionPersonalizada" style="background-color:#f8f9fa; padding:12px; border-radius:5px; border-left:4px solid #16a085;">
+                    <i class="fas fa-lightbulb text-warning"></i>
+                    <strong>Interpretación:</strong> <span id="textoInterpretacionPersonalizada">Selecciona variables y genera una gráfica para obtener un análisis personalizado.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fila 5: Recomendaciones -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card" style="border:1px solid #e0e0e0; border-radius:8px; overflow:hidden;">
+            <div class="card-header" style="background-color:#e67e22; color:white; padding:10px 15px;">
+                <i class="fas fa-lightbulb me-2"></i>
+                <strong>11. Recomendaciones para Reducir Tiempos Muertos</strong>
+                <span class="badge bg-success ms-2">Acciones</span>
+            </div>
+            <div class="card-body" style="padding:15px;">
+                <div id="recomendaciones-container">
+                    <p class="text-muted">Cargando recomendaciones...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div> <!-- Fin contenidoPDF -->
+
+{% endblock %}
+
+{% block scripts %}
+<!-- ==================== LIBRERÍAS EXTERNAS ==================== -->
+<!-- html2canvas: ya no se usa para el PDF, se deja por si se necesita a futuro -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- jsPDF: generación nativa del PDF (texto, imágenes de gráficas, tablas) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- jsPDF-AutoTable: plugin para dibujar tablas dentro del PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<!-- SheetJS (xlsx): generación nativa del archivo Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+/* ============================================================
+   VARIABLES GLOBALES
+   ============================================================ */
+let charts = {};                  // Instancias de Chart.js activas (por id de sección)
+let datosActuales = {};           // Último payload recibido de /api/reportes/analisis
+let personalizadaData = null;     // Config + datos de la gráfica personalizada (para PDF/Excel)
+let clustersActuales = [];        // Resultado de k-means real: máquinas agrupadas por temp/vibración
+let riesgoPredictivoActual = [];  // Máquinas marcadas en riesgo de falla próxima
+
+
+/* ============================================================
+   CARGA DE FILTROS (máquinas y productos para los <select>)
+   ============================================================ */
+async function cargarFiltros() {
+    try {
+        const [maquinasRes, productosRes] = await Promise.all([
+            fetch('/api/maquinas'),
+            fetch('/api/productos')
+        ]);
+
+        const maquinas = await maquinasRes.json();
+        const productos = await productosRes.json();
+
+        const maquinaSelect = document.getElementById('filtroMaquina');
+        maquinaSelect.innerHTML = '<option value="">Todas</option>' +
+            maquinas.map(m => `<option value="${m._id}">${m.nombre}</option>`).join('');
+
+        const productoSelect = document.getElementById('filtroProducto');
+        productoSelect.innerHTML = '<option value="">Todos</option>' +
+            productos.map(p => `<option value="${p._id}">${p.nombre}</option>`).join('');
+    } catch (error) {
+        console.error('Error cargando filtros:', error);
+    }
+}
+
+
+/* ============================================================
+   APLICAR FILTROS -> trae los datos del análisis y refresca todo
+   ============================================================ */
+async function aplicarFiltros() {
+    const params = new URLSearchParams({
+        fechaInicio: document.getElementById('fechaInicio').value,
+        fechaFin: document.getElementById('fechaFin').value,
+        maquina: document.getElementById('filtroMaquina').value,
+        producto: document.getElementById('filtroProducto').value
+    });
+
+    try {
+        const response = await fetch(`/api/reportes/analisis?${params}`);
+        const data = await response.json();
+        datosActuales = data;
+
+        document.getElementById('kpi-eficiencia').textContent = data.kpis.eficiencia + '%';
+        document.getElementById('kpi-fallas').textContent = data.kpis.fallas;
+        document.getElementById('kpi-tiempo-muerto').textContent = data.kpis.tiempo_muerto + 'h';
+        document.getElementById('kpi-calidad').textContent = data.kpis.calidad + '%';
+
+        // Clustering real (k-means) y riesgo predictivo, calculados antes de pintar nada más
+        const datosPorMaquina = agruparPorMaquina(data.prediccion_fallas);
+        clustersActuales = clusterizarMaquinas(datosPorMaquina);
+        riesgoPredictivoActual = evaluarRiesgoPredictivo(data.prediccion_fallas);
+
+        actualizarInterpretaciones(data);
+        actualizarGraficas(data);
+        actualizarRecomendaciones(data.recomendaciones);
+        actualizarRiesgoPredictivo(riesgoPredictivoActual);
+
+    } catch (error) {
+        console.error('Error aplicando filtros:', error);
+        alert('Error al cargar los datos del análisis');
+    }
+}
+
+
+/* ============================================================
+   INTERPRETACIONES AUTOMÁTICAS (texto dinámico bajo cada gráfica)
+   ============================================================ */
+function actualizarInterpretaciones(data) {
+    if (data.eficiencia_linea && data.eficiencia_linea.length > 0) {
+        const mejor = data.eficiencia_linea.reduce((a, b) => a.eficiencia > b.eficiencia ? a : b);
+        document.getElementById('nombreMejorLinea').textContent = mejor.linea;
+        document.getElementById('mejorEficiencia').textContent = mejor.eficiencia;
+    }
+
+    if (data.fallas_maquina && data.fallas_maquina.length > 0) {
+        const peor = data.fallas_maquina.reduce((a, b) => a.fallas > b.fallas ? a : b);
+        const total = data.fallas_maquina.reduce((s, d) => s + d.fallas, 0);
+        document.getElementById('nombrePeorMaquina').textContent = peor.maquina;
+        document.getElementById('porcentajeFallas').textContent = total > 0 ? ((peor.fallas / total) * 100).toFixed(1) : 0;
+    }
+
+    if (data.defectos_producto && data.defectos_producto.length > 0) {
+        const peor = data.defectos_producto.reduce((a, b) => a.defectos > b.defectos ? a : b);
+        document.getElementById('nombrePeorProducto').textContent = peor.producto;
+        document.getElementById('peorDefectos').textContent = peor.defectos;
+    }
+
+    if (data.productividad_operador && data.productividad_operador.length > 0) {
+        const mejor = data.productividad_operador.reduce((a, b) => a.productividad > b.productividad ? a : b);
+        const promedio = data.productividad_operador.reduce((s, d) => s + d.productividad, 0) / data.productividad_operador.length;
+        document.getElementById('nombreMejorOperador').textContent = mejor.operador;
+        document.getElementById('mejorProductividad').textContent = mejor.productividad;
+        document.getElementById('diferenciaProductividad').textContent = promedio > 0 ? ((mejor.productividad - promedio) / promedio * 100).toFixed(0) : 0;
+    }
+
+    if (data.causas_paro && data.causas_paro.length > 0) {
+        const principal = data.causas_paro.reduce((a, b) => a.total > b.total ? a : b);
+        document.getElementById('nombrePrincipalParo').textContent = principal.causa;
+        document.getElementById('principalParoCantidad').textContent = principal.total;
+    }
+
+    if (data.prediccion_fallas && data.prediccion_fallas.length > 0) {
+        const temps = data.prediccion_fallas.map(d => d.temperatura);
+        const vibs = data.prediccion_fallas.map(d => d.vibracion);
+        document.getElementById('tempPromedio').textContent = (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1);
+        document.getElementById('vibracionPromedio').textContent = (vibs.reduce((a, b) => a + b, 0) / vibs.length).toFixed(2);
+
+        if (data.prediccion_fallas.length > 1) {
+            const ultimos = data.prediccion_fallas.slice(-5);
+            const tempTrend = ultimos.map(d => d.temperatura);
+            const vibTrend = ultimos.map(d => d.vibracion);
+            const tempSubiendo = tempTrend[tempTrend.length - 1] > tempTrend[0];
+            const vibSubiendo = vibTrend[vibTrend.length - 1] > vibTrend[0];
+            document.getElementById('tendenciaGeneral').textContent = tempSubiendo && vibSubiendo ?
+                'progresivamente en las últimas semanas' :
+                'se mantienen estables con ligeras variaciones';
+        }
+    }
+
+    // Cluster de alto riesgo -> se usa el resultado real de k-means (clustersActuales),
+    // ya no el i % 3 falso
+    if (clustersActuales && clustersActuales.length > 0) {
+        const altoRiesgo = clustersActuales.filter(m => m.riesgo === 'Alto').map(m => m.maquina).join(', ');
+        document.getElementById('clusterAltoRiesgo').textContent = altoRiesgo || 'Ninguna';
+    } else {
+        document.getElementById('clusterAltoRiesgo').textContent = 'Datos insuficientes';
+    }
+}
+
+
+/* ============================================================
+   PLUGIN CHART.JS: muestra el valor numérico encima de cada barra
+   ============================================================ */
+const valorEnBarras = {
+    id: 'valorEnBarras',
+    afterDraw: function (chart) {
+        const ctx = chart.ctx;
+        chart.data.datasets.forEach(function (dataset, i) {
+            const meta = chart.getDatasetMeta(i);
+            meta.data.forEach(function (bar, index) {
+                const data = dataset.data[index];
+                if (data > 0) {
+                    ctx.save();
+                    ctx.font = 'bold 13px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.shadowColor = 'rgba(255,255,255,0.8)';
+                    ctx.shadowBlur = 4;
+                    ctx.fillStyle = '#2c3e50';
+                    ctx.fillText(data, bar.x, bar.y - 5);
+                    ctx.restore();
+                }
+            });
+        });
+    }
+};
+
+
+/* ============================================================
+   CLUSTERING REAL (k-means) Y MANTENIMIENTO PREDICTIVO
+   ============================================================ */
+
+// Normaliza un arreglo a z-score (media 0, desviación 1) para que
+// variables con escalas distintas (°C vs mm/s) pesen igual en el clustering
+function calcularZScore(valores) {
+    const { media, desviacion } = calcularStats(valores);
+    const sd = desviacion || 1;
+    return valores.map(v => (v - media) / sd);
+}
+
+// k-means simple en 2D. puntos = [[x,y], ...] ya normalizados.
+// Inicializa centroides repartidos a lo largo del eje X para evitar
+// que arranquen todos pegados y el algoritmo colapse en un solo cluster.
+function kMeans(puntos, k = 3, maxIter = 100) {
+    const ordenados = [...puntos].sort((a, b) => a[0] - b[0]);
+    let centroides = [];
+    for (let i = 0; i < k; i++) {
+        const idx = Math.floor(i * (ordenados.length - 1) / Math.max(k - 1, 1));
+        centroides.push([...ordenados[idx]]);
+    }
+
+    let asignaciones = new Array(puntos.length).fill(0);
+
+    for (let iter = 0; iter < maxIter; iter++) {
+        let cambiado = false;
+
+        // Asignar cada punto al centroide más cercano (distancia euclidiana)
+        for (let i = 0; i < puntos.length; i++) {
+            let mejorDist = Infinity, mejorC = 0;
+            for (let c = 0; c < k; c++) {
+                const dx = puntos[i][0] - centroides[c][0];
+                const dy = puntos[i][1] - centroides[c][1];
+                const dist = dx * dx + dy * dy;
+                if (dist < mejorDist) { mejorDist = dist; mejorC = c; }
+            }
+            if (asignaciones[i] !== mejorC) cambiado = true;
+            asignaciones[i] = mejorC;
+        }
+
+        // Recalcular centroides como el promedio de sus puntos asignados
+        const sumas = Array.from({ length: k }, () => [0, 0, 0]); // [sumaX, sumaY, cantidad]
+        puntos.forEach((p, i) => {
+            const c = asignaciones[i];
+            sumas[c][0] += p[0]; sumas[c][1] += p[1]; sumas[c][2]++;
+        });
+        for (let c = 0; c < k; c++) {
+            if (sumas[c][2] > 0) centroides[c] = [sumas[c][0] / sumas[c][2], sumas[c][1] / sumas[c][2]];
+        }
+
+        if (!cambiado) break; // convergió
+    }
+
+    return { asignaciones, centroides };
+}
+
+// Agrupa las lecturas de sensores por máquina y calcula sus promedios
+function agruparPorMaquina(prediccion_fallas) {
+    const grupos = {};
+    (prediccion_fallas || []).forEach(d => {
+        const maquina = d.maquina || d.maquina_id || 'Desconocida';
+        if (!grupos[maquina]) grupos[maquina] = { temperaturas: [], vibraciones: [], presiones: [] };
+        grupos[maquina].temperaturas.push(d.temperatura);
+        grupos[maquina].vibraciones.push(d.vibracion);
+        grupos[maquina].presiones.push(d.presion);
+    });
+    return Object.keys(grupos).map(maquina => {
+        const g = grupos[maquina];
+        return {
+            maquina,
+            tempProm: calcularStats(g.temperaturas).media,
+            vibProm: calcularStats(g.vibraciones).media,
+            presProm: calcularStats(g.presiones).media,
+            lecturas: g.temperaturas.length
+        };
+    });
+}
+
+// Clusteriza las máquinas en 3 grupos de riesgo usando temperatura y vibración promedio
+function clusterizarMaquinas(datosPorMaquina) {
+    if (!datosPorMaquina || datosPorMaquina.length < 3) return []; // no hay suficientes máquinas para 3 clusters
+
+    const temps = datosPorMaquina.map(d => d.tempProm);
+    const vibs = datosPorMaquina.map(d => d.vibProm);
+    const tempsZ = calcularZScore(temps);
+    const vibsZ = calcularZScore(vibs);
+    const puntos = datosPorMaquina.map((d, i) => [tempsZ[i], vibsZ[i]]);
+
+    const { asignaciones, centroides } = kMeans(puntos, 3);
+
+    // El cluster cuyo centroide tiene mayor temperatura+vibración normalizada = mayor riesgo
+    const etiquetas = ['Alto', 'Medio', 'Bajo'];
+    const ordenCentroides = centroides
+        .map((c, i) => ({ i, score: c[0] + c[1] }))
+        .sort((a, b) => b.score - a.score);
+    const mapaRiesgo = {};
+    ordenCentroides.forEach((c, rank) => { mapaRiesgo[c.i] = etiquetas[rank]; });
+
+    return datosPorMaquina.map((d, i) => ({
+        ...d,
+        riesgo: mapaRiesgo[asignaciones[i]]
+    }));
+}
+
+// Regla de mantenimiento predictivo: marca una máquina en riesgo si el promedio
+// de sus últimas lecturas supera el umbral (media + 1 desviación estándar) de la planta
+// en temperatura Y vibración al mismo tiempo.
+function evaluarRiesgoPredictivo(prediccion_fallas) {
+    if (!prediccion_fallas || prediccion_fallas.length === 0) return [];
+
+    const temps = prediccion_fallas.map(d => d.temperatura);
+    const vibs = prediccion_fallas.map(d => d.vibracion);
+    const tempStats = calcularStats(temps);
+    const vibStats = calcularStats(vibs);
+    const umbralTemp = tempStats.media + tempStats.desviacion;
+    const umbralVib = vibStats.media + vibStats.desviacion;
+
+    const porMaquina = {};
+    prediccion_fallas.forEach(d => {
+        const maquina = d.maquina || d.maquina_id || 'Desconocida';
+        if (!porMaquina[maquina]) porMaquina[maquina] = [];
+        porMaquina[maquina].push(d);
+    });
+
+    const resultado = [];
+    Object.keys(porMaquina).forEach(maquina => {
+        const lecturas = porMaquina[maquina];
+        const ultimas = lecturas.slice(-3); // últimas 3 lecturas registradas de esa máquina
+        if (ultimas.length === 0) return;
+        const tempReciente = calcularStats(ultimas.map(d => d.temperatura)).media;
+        const vibReciente = calcularStats(ultimas.map(d => d.vibracion)).media;
+        if (tempReciente > umbralTemp && vibReciente > umbralVib) {
+            resultado.push({ maquina, tempReciente, vibReciente });
+        }
+    });
+
+    return resultado.sort((a, b) => (b.tempReciente + b.vibReciente) - (a.tempReciente + a.vibReciente));
+}
+
+// Pinta la tabla de máquinas en riesgo en el dashboard
+function actualizarRiesgoPredictivo(riesgoPredictivo) {
+    const container = document.getElementById('riesgoPredictivo-container');
+    if (!riesgoPredictivo || riesgoPredictivo.length === 0) {
+        container.innerHTML = '<p class="text-success mb-0"><i class="fas fa-check-circle"></i> Ninguna máquina supera los umbrales de riesgo en este periodo.</p>';
+        return;
+    }
+    let html = '<table class="table table-sm table-bordered mb-0"><thead><tr><th>Máquina</th><th>Temp. Reciente (°C)</th><th>Vibración Reciente (mm/s)</th><th>Estado</th></tr></thead><tbody>';
+    riesgoPredictivo.forEach(r => {
+        html += `<tr class="table-danger">
+            <td>${r.maquina}</td>
+            <td>${r.tempReciente.toFixed(1)}</td>
+            <td>${r.vibReciente.toFixed(2)}</td>
+            <td><i class="fas fa-exclamation-triangle text-danger"></i> Riesgo de falla próxima</td>
+        </tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+
+/* ============================================================
+   RENDERIZADO DE LAS GRÁFICAS PRINCIPALES (Chart.js)
+   ============================================================ */
+function actualizarGraficas(data) {
+    Object.keys(charts).forEach(key => {
+        if (key !== 'personalizada' && charts[key]) { charts[key].destroy(); delete charts[key]; }
+    });
+
+    const colores = ['#3498db', '#2ecc71', '#f1c40f', '#e74c3c', '#9b59b6'];
+
+    // 1. Eficiencia por línea
+    const ctx1 = document.getElementById('eficienciaLineaChart').getContext('2d');
+    charts.eficiencia = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: data.eficiencia_linea.map(d => d.linea),
+            datasets: [{ label: 'Eficiencia (%)', data: data.eficiencia_linea.map(d => d.eficiencia), backgroundColor: colores.slice(0, data.eficiencia_linea.length).map(c => c + 'CC'), borderColor: '#2c3e50', borderWidth: 1, borderRadius: 5 }]
+        },
+        plugins: [valorEnBarras],
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, title: { display: true, text: 'Eficiencia (%)' } }, x: { title: { display: true, text: 'Línea' } } } }
+    });
+
+    // 2. Fallas por máquina
+    const ctx2 = document.getElementById('fallasMaquinaChart').getContext('2d');
+    charts.fallas = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: data.fallas_maquina.map(d => d.maquina),
+            datasets: [{ label: 'Fallas', data: data.fallas_maquina.map(d => d.fallas), backgroundColor: '#e74c3cCC', borderColor: '#c0392b', borderWidth: 1, borderRadius: 5 }]
+        },
+        plugins: [valorEnBarras],
+        options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, title: { display: true, text: 'Número de Fallas' } }, y: { title: { display: true, text: 'Máquina' } } } }
+    });
+
+    // 3. Defectos por producto
+    const ctx3 = document.getElementById('defectosProductoChart').getContext('2d');
+    charts.defectos = new Chart(ctx3, {
+        type: 'bar',
+        data: {
+            labels: data.defectos_producto.map(d => d.producto),
+            datasets: [{ label: 'Defectos', data: data.defectos_producto.map(d => d.defectos), backgroundColor: '#f39c12CC', borderColor: '#e67e22', borderWidth: 1, borderRadius: 5 }]
+        },
+        plugins: [valorEnBarras],
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Cantidad de Defectos' } }, x: { title: { display: true, text: 'Producto' } } } }
+    });
+
+    // 4. Productividad por operador
+    const ctx4 = document.getElementById('productividadOperadorChart').getContext('2d');
+    charts.productividad = new Chart(ctx4, {
+        type: 'bar',
+        data: {
+            labels: data.productividad_operador.map(d => d.operador),
+            datasets: [{ label: 'Unidades/Hora', data: data.productividad_operador.map(d => d.productividad), backgroundColor: '#2ecc71CC', borderColor: '#27ae60', borderWidth: 1, borderRadius: 5 }]
+        },
+        plugins: [valorEnBarras],
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Unidades/Hora' } }, x: { title: { display: true, text: 'Operador' } } } }
+    });
+
+    // 5. Causas de paro
+    const ctx5 = document.getElementById('causasParoChart').getContext('2d');
+    const coloresParos = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FF8A5C', '#A29BFE', '#FD79A8', '#00B894'];
+    const causasOrdenadas = [...data.causas_paro].sort((a, b) => b.total - a.total);
+    charts.paros = new Chart(ctx5, {
+        type: 'pie',
+        data: {
+            labels: causasOrdenadas.map(d => d.causa),
+            datasets: [{ data: causasOrdenadas.map(d => d.total), backgroundColor: coloresParos.slice(0, causasOrdenadas.length), borderColor: '#ffffff', borderWidth: 3, hoverOffset: 25 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { size: 11 } } } } }
+    });
+
+    // 6. Correlación temperatura vs vibración
+    const ctx6 = document.getElementById('correlacionChart').getContext('2d');
+    charts.correlacion = new Chart(ctx6, {
+        type: 'scatter',
+        data: {
+            datasets: [{ label: 'Temperatura vs Vibración', data: data.prediccion_fallas.map(d => ({ x: d.temperatura, y: d.vibracion })), backgroundColor: 'rgba(52,152,219,0.6)', borderColor: '#2980b9', pointRadius: 6 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } }, scales: { x: { title: { display: true, text: 'Temperatura (°C)' }, beginAtZero: true }, y: { title: { display: true, text: 'Vibración (mm/s)' }, beginAtZero: true } } }
+    });
+
+    // 7. Tendencias de sensores / predicción
+    const ctx7 = document.getElementById('prediccionFallasChart').getContext('2d');
+    charts.prediccion = new Chart(ctx7, {
+        type: 'line',
+        data: {
+            labels: data.prediccion_fallas.map(d => d.fecha),
+            datasets: [
+                { label: 'Temperatura (°C)', data: data.prediccion_fallas.map(d => d.temperatura), borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.1)', fill: true, tension: 0.3, pointRadius: 3 },
+                { label: 'Vibración (mm/s)', data: data.prediccion_fallas.map(d => d.vibracion), borderColor: '#f39c12', backgroundColor: 'rgba(243,156,18,0.1)', fill: true, tension: 0.3, pointRadius: 3 },
+                { label: 'Presión (bar)', data: data.prediccion_fallas.map(d => d.presion), borderColor: '#3498db', backgroundColor: 'rgba(52,152,219,0.1)', fill: true, tension: 0.3, pointRadius: 3 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } }, scales: { x: { title: { display: true, text: 'Fecha' } }, y: { title: { display: true, text: 'Valor' } } } }
+    });
+
+    // 8. Clusters reales (k-means sobre temperatura y vibración promedio por máquina)
+    const ctx8 = document.getElementById('clustersChart').getContext('2d');
+    if (clustersActuales && clustersActuales.length > 0) {
+        const porRiesgo = { Alto: [], Medio: [], Bajo: [] };
+        clustersActuales.forEach(m => {
+            porRiesgo[m.riesgo].push({ x: m.tempProm, y: m.vibProm, label: m.maquina });
+        });
+        charts.clusters = new Chart(ctx8, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    { label: 'Bajo Riesgo', data: porRiesgo.Bajo, backgroundColor: 'rgba(52,152,219,0.8)', borderColor: '#2980b9', pointRadius: 10 },
+                    { label: 'Riesgo Medio', data: porRiesgo.Medio, backgroundColor: 'rgba(46,204,113,0.8)', borderColor: '#27ae60', pointRadius: 10 },
+                    { label: 'Alto Riesgo', data: porRiesgo.Alto, backgroundColor: 'rgba(231,76,60,0.8)', borderColor: '#c0392b', pointRadius: 10 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.raw.label}: ${ctx.raw.x.toFixed(1)}°C, ${ctx.raw.y.toFixed(2)} mm/s` } }
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Temperatura Promedio (°C)' } },
+                    y: { title: { display: true, text: 'Vibración Promedio (mm/s)' } }
+                }
+            }
+        });
+    } else {
+        charts.clusters = new Chart(ctx8, {
+            type: 'scatter',
+            data: { datasets: [] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'No hay suficientes máquinas para agrupar (mínimo 3)' } } }
+        });
+    }
+}
+
+
+/* ============================================================
+   RECOMENDACIONES (tarjetas con prioridad Alta/Media/Baja)
+   ============================================================ */
+function actualizarRecomendaciones(recomendaciones) {
+    const container = document.getElementById('recomendaciones-container');
+    if (!recomendaciones || recomendaciones.length === 0) {
+        container.innerHTML = '<p class="text-muted">No hay recomendaciones disponibles</p>';
+        return;
+    }
+    let html = '<div class="row">';
+    recomendaciones.forEach((item) => {
+        const icono = item.prioridad === 'Alta' ? '🔴' : item.prioridad === 'Media' ? '🟡' : '🟢';
+        const bgColor = item.prioridad === 'Alta' ? 'border-danger' : item.prioridad === 'Media' ? 'border-warning' : 'border-success';
+        html += `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100 border-left-4 ${bgColor}">
+                    <div class="card-body">
+                        <h6 class="card-title">${icono} ${item.titulo}</h6>
+                        <p class="card-text small">${item.descripcion}</p>
+                        <p class="card-text small text-muted"><i class="fas fa-lightbulb"></i> ${item.accion}</p>
+                        <span class="badge ${item.prioridad === 'Alta' ? 'bg-danger' : item.prioridad === 'Media' ? 'bg-warning' : 'bg-success'}">${item.prioridad}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+
+/* ============================================================
+   GRÁFICA PERSONALIZADA (sección 10, configurable por el usuario)
+   ============================================================ */
+function generarGraficaPersonalizada() {
+    const tipo = document.getElementById('tipoGrafica').value;
+    const varX = document.getElementById('variableX').value;
+    const varY = document.getElementById('variableY').value;
+
+    const datos = {
+        productos: ['Producto A', 'Producto B', 'Producto C', 'Producto D', 'Producto E'],
+        maquinas: ['Máquina 1', 'Máquina 2', 'Máquina 3', 'Máquina 4', 'Máquina 5'],
+        operadores: ['Juan', 'María', 'Carlos', 'Ana', 'Luis'],
+        fecha: ['Ene', 'Feb', 'Mar', 'Abr', 'May']
+    };
+
+    const datosY = {
+        produccion: [120, 150, 90, 180, 110],
+        defectos: [5, 8, 3, 12, 6],
+        eficiencia: [85, 92, 78, 95, 88],
+        tiempo: [45, 30, 60, 25, 50]
+    };
+
+    const labels = datos[varX] || datos.productos;
+    const values = datosY[varY] || datosY.produccion;
+
+    // Guardamos la config/datos actuales para poder usarlos en el PDF y en Excel
+    personalizadaData = { tipo, varX, varY, labels, values };
+
+    const ctx = document.getElementById('personalizadaChart').getContext('2d');
+
+    if (charts.personalizada) charts.personalizada.destroy();
+
+    const coloresPersonalizados = ['#3498db', '#2ecc71', '#f39c12', '#e74c3c', '#9b59b6'];
+
+    let config = {
+        type: tipo,
+        data: {
+            labels: labels,
+            datasets: [{
+                label: `${varY.toUpperCase()} por ${varX.toUpperCase()}`,
+                data: values,
+                backgroundColor: coloresPersonalizados.slice(0, labels.length).map(c => c + 'BB'),
+                borderColor: '#2c3e50',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: `Gráfica Personalizada: ${varY} vs ${varX}`, font: { size: 14, weight: 'bold' } }
+            }
+        }
+    };
+
+    if (tipo === 'pie' || tipo === 'doughnut') {
+        config.options.plugins.legend = { position: 'right' };
+    } else if (tipo === 'bar') {
+        config.plugins = [valorEnBarras];
+    }
+
+    charts.personalizada = new Chart(ctx, config);
+
+    // ---- Interpretación personalizada ----
+    const maxValor = Math.max(...values);
+    const minValor = Math.min(...values);
+    const promedio = (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
+    const maxIndex = values.indexOf(maxValor);
+    const minIndex = values.indexOf(minValor);
+    const nombreMax = labels[maxIndex];
+    const nombreMin = labels[minIndex];
+    const rango = (maxValor - minValor).toFixed(1);
+
+    let interpretacion = '';
+
+    if (varY === 'produccion') {
+        interpretacion = `En el análisis de <strong>producción</strong> por <strong>${varX}</strong>, se observa que <strong>${nombreMax}</strong> destaca con ${maxValor} unidades producidas, superando ampliamente el promedio de ${promedio} unidades. Por otro lado, <strong>${nombreMin}</strong> presenta el menor rendimiento con ${minValor} unidades, lo que sugiere una brecha de producción de ${rango} unidades entre el mejor y el peor desempeño. Se recomienda analizar las condiciones de operación en ${nombreMin} para identificar áreas de mejora y replicar las prácticas exitosas de ${nombreMax}.`;
+    } else if (varY === 'defectos') {
+        interpretacion = `El análisis de <strong>defectos</strong> por <strong>${varX}</strong> revela que <strong>${nombreMax}</strong> concentra la mayor cantidad con ${maxValor} defectos, representando un punto crítico de calidad. El promedio de defectos es de ${promedio}, y <strong>${nombreMin}</strong> presenta el menor número con ${minValor} defectos. Se sugiere realizar una auditoría de proceso en ${nombreMax} para identificar las causas raíz de los defectos, que podrían estar relacionadas con temperatura, presión o calidad de la materia prima.`;
+    } else if (varY === 'eficiencia') {
+        interpretacion = `La <strong>eficiencia</strong> por <strong>${varX}</strong> muestra que <strong>${nombreMax}</strong> alcanza el ${maxValor}%, superando el promedio del ${promedio}%. En contraste, <strong>${nombreMin}</strong> registra solo ${minValor}%, con una diferencia de ${rango} puntos porcentuales. Esta variación sugiere que ${nombreMax} ha optimizado sus procesos, mientras que ${nombreMin} requiere una revisión de sus estándares operativos para mejorar su rendimiento.`;
+    } else if (varY === 'tiempo') {
+        interpretacion = `El análisis de <strong>tiempos</strong> por <strong>${varX}</strong> indica que <strong>${nombreMax}</strong> registra ${maxValor} minutos, mientras que <strong>${nombreMin}</strong> tiene ${minValor} minutos (el más eficiente). El tiempo promedio es de ${promedio} minutos. Se recomienda estandarizar los procesos de ${nombreMin} en toda la planta para reducir los tiempos de producción y aumentar la capacidad instalada.`;
+    } else {
+        interpretacion = `El análisis de <strong>${varY}</strong> por <strong>${varX}</strong> muestra que <strong>${nombreMax}</strong> lidera con ${maxValor}, mientras que <strong>${nombreMin}</strong> tiene el valor más bajo con ${minValor}. El promedio general es de ${promedio}. Esta distribución sugiere oportunidades de mejora en las áreas con menor rendimiento.`;
+    }
+
+    document.getElementById('textoInterpretacionPersonalizada').innerHTML = interpretacion;
+}
+
+function limpiarPersonalizada() {
+    personalizadaData = null; // ya no hay datos válidos para PDF/Excel
+    if (charts.personalizada) { charts.personalizada.destroy(); delete charts.personalizada; }
+    const ctx = document.getElementById('personalizadaChart').getContext('2d');
+    charts.personalizada = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Selecciona opciones y genera'],
+            datasets: [{ label: 'Gráfica Personalizada', data: [0], backgroundColor: 'rgba(200,200,200,0.5)' }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { title: { display: true, text: 'Gráfica Personalizada - Lista para generar' } }
+        }
+    });
+    document.getElementById('textoInterpretacionPersonalizada').textContent = 'Selecciona variables y genera una gráfica para obtener un análisis personalizado.';
+}
+
+
+/* ============================================================
+   HELPERS DE ESTADÍSTICA (usados por dashboard, PDF y Excel)
+   ============================================================ */
+
+// Promedio, máximo, mínimo y desviación estándar de un arreglo de números
+function calcularStats(valores) {
+    const n = valores.length;
+    const media = valores.reduce((a, b) => a + b, 0) / n;
+    const max = Math.max(...valores);
+    const min = Math.min(...valores);
+    const varianza = valores.reduce((s, v) => s + Math.pow(v - media, 2), 0) / n;
+    return { media, max, min, desviacion: Math.sqrt(varianza) };
+}
+
+// Tendencia simple: compara el promedio de la 1ra mitad vs la 2da mitad de la serie
+function calcularTendencia(valores) {
+    if (valores.length < 2) return '→ Estable';
+    const mitad = Math.floor(valores.length / 2);
+    const p1 = valores.slice(0, mitad).reduce((a, b) => a + b, 0) / mitad;
+    const p2 = valores.slice(mitad).reduce((a, b) => a + b, 0) / (valores.length - mitad);
+    const cambio = p1 !== 0 ? ((p2 - p1) / p1) * 100 : 0;
+    if (cambio > 5) return `↑ Al alza (+${cambio.toFixed(1)}%)`;
+    if (cambio < -5) return `↓ A la baja (${cambio.toFixed(1)}%)`;
+    return '→ Estable';
+}
+
+// Coeficiente de correlación de Pearson entre dos series numéricas
+function pearsonCorr(x, y) {
+    const n = x.length;
+    const mx = x.reduce((a, b) => a + b, 0) / n;
+    const my = y.reduce((a, b) => a + b, 0) / n;
+    let num = 0, dx = 0, dy = 0;
+    for (let i = 0; i < n; i++) {
+        num += (x[i] - mx) * (y[i] - my);
+        dx += Math.pow(x[i] - mx, 2);
+        dy += Math.pow(y[i] - my, 2);
+    }
+    const den = Math.sqrt(dx * dy);
+    return den === 0 ? 0 : num / den;
+}
+
+function interpretarR(r) {
+    const abs = Math.abs(r);
+    const signo = r >= 0 ? 'positiva' : 'negativa';
+    if (abs > 0.7) return `Fuerte ${signo}`;
+    if (abs > 0.4) return `Moderada ${signo}`;
+    return `Débil ${signo}`;
+}
+
+// Saca el texto de un bloque "Interpretación:" limpiando el prefijo
+function obtenerInterpretacion(id) {
+    const el = document.getElementById(id);
+    if (!el) return '';
+    return el.innerText.replace(/^\s*Interpretación:\s*/i, '').trim();
+}
+
+function hexToRgb(hex) {
+    return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+}
+
+
+/* ============================================================
+   GENERACIÓN DE PDF (100% nativo: texto + imágenes de Chart.js + tablas)
+   ============================================================ */
+
+// Salta de página si lo que sigue no cabe en el espacio restante
+function checkPageBreak(pdf, y, alturaNecesaria, margin, pageHeight) {
+    if (y + alturaNecesaria > pageHeight - margin) {
+        pdf.addPage();
+        return margin;
+    }
+    return y;
+}
+
+// Dibuja una sección completa: encabezado de color, imagen de la gráfica,
+// tabla de estadísticas y párrafo de interpretación. Devuelve la nueva posición Y.
+function agregarSeccionPDF(pdf, opts) {
+    const { y0, numero, titulo, colorHex, chart, statsHead, statsBody, interpretacion, margin, usableWidth, pageHeight } = opts;
+
+    const imgW = usableWidth;
+    const imgH = chart ? Math.min(72, imgW * (chart.height / chart.width)) : 0;
+    const tablaAltura = statsBody ? (10 + statsBody.length * 7) : 0;
+    const lineas = pdf.splitTextToSize(interpretacion, usableWidth);
+    const textoAltura = lineas.length * 4.2;
+    const alturaTotal = 12 + imgH + 4 + tablaAltura + 4 + textoAltura + 8;
+
+    let y = checkPageBreak(pdf, y0, alturaTotal, margin, pageHeight);
+
+    // Encabezado de sección (franja de color + título)
+    const [r, g, b] = hexToRgb(colorHex);
+    pdf.setFillColor(r, g, b);
+    pdf.rect(margin, y, usableWidth, 8, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(11);
+    pdf.setFont(undefined, 'bold');
+    pdf.text(`${numero}. ${titulo}`, margin + 3, y + 5.5);
+    y += 12;
+
+    // Gráfica (imagen nítida sacada directo de Chart.js, no de screenshot)
+    if (chart) {
+        pdf.addImage(chart.toBase64Image(), 'PNG', margin, y, imgW, imgH);
+        y += imgH + 4;
+    }
+
+    // Tabla de estadísticas
+    if (statsBody && statsBody.length) {
+        pdf.autoTable({
+            startY: y,
+            margin: { left: margin, right: margin },
+            head: [statsHead],
+            body: statsBody,
+            theme: 'grid',
+            styles: { fontSize: 8.5, cellPadding: 2.5, halign: 'center' },
+            headStyles: { fillColor: [r, g, b], textColor: 255 },
+            tableWidth: usableWidth
+        });
+        y = pdf.lastAutoTable.finalY + 4;
+    }
+
+    // Interpretación (texto real, no imagen -> nítido y seleccionable)
+    pdf.setTextColor(70, 70, 70);
+    pdf.setFont(undefined, 'normal');
+    pdf.setFontSize(9);
+    pdf.text(lineas, margin, y);
+    y += textoAltura + 8;
+
+    return y;
+}
+
+async function generarReportePDF() {
+    if (!datosActuales || !datosActuales.eficiencia_linea) {
+        alert('Primero aplica los filtros para tener datos que reportar');
+        return;
+    }
+
+    const loading = document.createElement('div');
+    loading.className = 'alert alert-info text-center';
+    loading.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando reporte PDF...';
+    document.querySelector('.container-fluid').prepend(loading);
+
+    try {
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = 210, pageHeight = 297, margin = 15;
+        const usableWidth = pageWidth - margin * 2;
+        const data = datosActuales;
+
+        // ---------- ENCABEZADO ----------
+        pdf.setFillColor(44, 62, 80);
+        pdf.rect(0, 0, pageWidth, 32, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFont(undefined, 'bold');
+        pdf.setFontSize(18);
+        pdf.text('SISTEMA DE MANUFACTURA DE PLÁSTICOS', pageWidth / 2, 14, { align: 'center' });
+        pdf.setFontSize(12);
+        pdf.setFont(undefined, 'normal');
+        pdf.text('Reporte de Análisis de Producción', pageWidth / 2, 21, { align: 'center' });
+        pdf.setFontSize(9);
+        const fi = document.getElementById('fechaInicio').value || 'N/A';
+        const ff = document.getElementById('fechaFin').value || 'N/A';
+        pdf.text(`Generado: ${new Date().toLocaleDateString('es-ES')}  |  Periodo: ${fi} a ${ff}`, pageWidth / 2, 27, { align: 'center' });
+
+        let y = 40;
+
+        // ---------- KPIs ----------
+        pdf.setTextColor(44, 62, 80);
+        pdf.setFontSize(12);
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Indicadores Clave (KPIs)', margin, y);
+        y += 3;
+        pdf.autoTable({
+            startY: y,
+            margin: { left: margin, right: margin },
+            head: [['Eficiencia Global', 'Total Fallas', 'Tiempo Muerto', 'Tasa de Calidad']],
+            body: [[data.kpis.eficiencia + '%', data.kpis.fallas, data.kpis.tiempo_muerto + ' h', data.kpis.calidad + '%']],
+            theme: 'grid',
+            styles: { fontSize: 10, halign: 'center', cellPadding: 3 },
+            headStyles: { fillColor: [44, 62, 80], textColor: 255 }
+        });
+        y = pdf.lastAutoTable.finalY + 8;
+
+        // ---------- 1. Eficiencia por línea ----------
+        const effVals = data.eficiencia_linea.map(d => d.eficiencia);
+        const effStats = calcularStats(effVals);
+        y = agregarSeccionPDF(pdf, {
+            y0: y, numero: 1, titulo: 'Eficiencia por Línea de Producción', colorHex: '#2c3e50',
+            chart: charts.eficiencia,
+            statsHead: ['Promedio', 'Máximo', 'Mínimo', 'Desv. Estándar'],
+            statsBody: [[effStats.media.toFixed(1) + '%', effStats.max.toFixed(1) + '%', effStats.min.toFixed(1) + '%', effStats.desviacion.toFixed(1)]],
+            interpretacion: obtenerInterpretacion('interpretacionEficiencia'),
+            margin, usableWidth, pageHeight
+        });
+
+        // ---------- 2. Fallas por máquina ----------
+        const fallasVals = data.fallas_maquina.map(d => d.fallas);
+        const fallasStats = calcularStats(fallasVals);
+        y = agregarSeccionPDF(pdf, {
+            y0: y, numero: 2, titulo: 'Máquinas con Mayor Número de Fallas', colorHex: '#c0392b',
+            chart: charts.fallas,
+            statsHead: ['Promedio', 'Máximo', 'Mínimo', 'Desv. Estándar'],
+            statsBody: [[fallasStats.media.toFixed(1), fallasStats.max, fallasStats.min, fallasStats.desviacion.toFixed(1)]],
+            interpretacion: obtenerInterpretacion('interpretacionFallas'),
+            margin, usableWidth, pageHeight
+        });
+
+        // ---------- 3. Defectos por producto ----------
+        const defVals = data.defectos_producto.map(d => d.defectos);
+        const defStats = calcularStats(defVals);
+        y = agregarSeccionPDF(pdf, {
+            y0: y, numero: 3, titulo: 'Productos con Mayor Cantidad de Defectos', colorHex: '#f39c12',
+            chart: charts.defectos,
+            statsHead: ['Promedio', 'Máximo', 'Mínimo', 'Desv. Estándar'],
+            statsBody: [[defStats.media.toFixed(1), defStats.max, defStats.min, defStats.desviacion.toFixed(1)]],
+            interpretacion: obtenerInterpretacion('interpretacionDefectos'),
+            margin, usableWidth, pageHeight
+        });
+
+        // ---------- 4. Productividad por operador ----------
+        const prodVals = data.productividad_operador.map(d => d.productividad);
+        const prodStats = calcularStats(prodVals);
+        y = agregarSeccionPDF(pdf, {
+            y0: y, numero: 4, titulo: 'Productividad por Operador', colorHex: '#27ae60',
+            chart: charts.productividad,
+            statsHead: ['Promedio', 'Máximo', 'Mínimo', 'Desv. Estándar'],
+            statsBody: [[prodStats.media.toFixed(1), prodStats.max.toFixed(1), prodStats.min.toFixed(1), prodStats.desviacion.toFixed(1)]],
+            interpretacion: obtenerInterpretacion('interpretacionProductividad'),
+            margin, usableWidth, pageHeight
+        });
+
+        // ---------- 5. Causas de paro ----------
+        const paroVals = data.causas_paro.map(d => d.total);
+        const paroStats = calcularStats(paroVals);
+        y = agregarSeccionPDF(pdf, {
+            y0: y, numero: 5, titulo: 'Distribución de Causas de Paro', colorHex: '#8e44ad',
+            chart: charts.paros,
+            statsHead: ['Promedio', 'Máximo', 'Mínimo', 'Desv. Estándar'],
+            statsBody: [[paroStats.media.toFixed(1), paroStats.max, paroStats.min, paroStats.desviacion.toFixed(1)]],
+            interpretacion: obtenerInterpretacion('interpretacionParos'),
+            margin, usableWidth, pageHeight
+        });
+
+        // ---------- 6. Correlación temperatura vs vibración ----------
+        const temps = data.prediccion_fallas.map(d => d.temperatura);
+        const vibs = data.prediccion_fallas.map(d => d.vibracion);
+        const tempStats = calcularStats(temps);
+        const vibStats = calcularStats(vibs);
+        const r = pearsonCorr(temps, vibs);
+        y = agregarSeccionPDF(pdf, {
+            y0: y, numero: 6, titulo: 'Correlación: Temperatura vs Vibración', colorHex: '#2980b9',
+            chart: charts.correlacion,
+            statsHead: ['Variable', 'Promedio', 'Desv. Estándar'],
+            statsBody: [
+                ['Temperatura (°C)', tempStats.media.toFixed(1), tempStats.desviacion.toFixed(1)],
+                ['Vibración (mm/s)', vibStats.media.toFixed(2), vibStats.desviacion.toFixed(2)],
+                ['Coef. correlación (r)', r.toFixed(3), interpretarR(r)]
+            ],
+            interpretacion: obtenerInterpretacion('interpretacionCorrelacion'),
+            margin, usableWidth, pageHeight
+        });
+
+        // ---------- 7. Tendencias de sensores / predicción ----------
+        const presiones = data.prediccion_fallas.map(d => d.presion);
+        y = agregarSeccionPDF(pdf, {
+            y0: y, numero: 7, titulo: 'Tendencias de Sensores - Predicción de Fallas', colorHex: '#1abc9c',
+            chart: charts.prediccion,
+            statsHead: ['Variable', 'Promedio', 'Tendencia'],
+            statsBody: [
+                ['Temperatura (°C)', tempStats.media.toFixed(1), calcularTendencia(temps)],
+                ['Vibración (mm/s)', vibStats.media.toFixed(2), calcularTendencia(vibs)],
+                ['Presión (bar)', calcularStats(presiones).media.toFixed(1), calcularTendencia(presiones)]
+            ],
+            interpretacion: obtenerInterpretacion('interpretacionPrediccion'),
+            margin, usableWidth, pageHeight
+        });
+
+        // ---------- 8. Clusters de máquinas (k-means real) ----------
+        if (clustersActuales && clustersActuales.length > 0) {
+            const conteo = { Alto: 0, Medio: 0, Bajo: 0 };
+            clustersActuales.forEach(m => conteo[m.riesgo]++);
+            y = agregarSeccionPDF(pdf, {
+                y0: y, numero: 8, titulo: 'Agrupación de Máquinas por Comportamiento (k-means)', colorHex: '#9b59b6',
+                chart: charts.clusters,
+                statsHead: ['Nivel de Riesgo', 'Máquinas', 'Detalle'],
+                statsBody: [
+                    ['Alto', conteo.Alto, clustersActuales.filter(m => m.riesgo === 'Alto').map(m => m.maquina).join(', ') || '-'],
+                    ['Medio', conteo.Medio, clustersActuales.filter(m => m.riesgo === 'Medio').map(m => m.maquina).join(', ') || '-'],
+                    ['Bajo', conteo.Bajo, clustersActuales.filter(m => m.riesgo === 'Bajo').map(m => m.maquina).join(', ') || '-']
+                ],
+                interpretacion: obtenerInterpretacion('interpretacionClusters'),
+                margin, usableWidth, pageHeight
+            });
+        }
+
+        // ---------- 9. Mantenimiento Predictivo: máquinas en riesgo ----------
+        y = checkPageBreak(pdf, y, 30, margin, pageHeight);
+        const [rr, rg, rb] = hexToRgb('#d35400');
+        pdf.setFillColor(rr, rg, rb);
+        pdf.rect(margin, y, usableWidth, 8, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(11);
+        pdf.setFont(undefined, 'bold');
+        pdf.text('9. Mantenimiento Predictivo: Máquinas en Riesgo de Falla Próxima', margin + 3, y + 5.5);
+        y += 12;
+
+        if (riesgoPredictivoActual && riesgoPredictivoActual.length > 0) {
+            pdf.autoTable({
+                startY: y,
+                margin: { left: margin, right: margin },
+                head: [['Máquina', 'Temp. Reciente (°C)', 'Vibración Reciente (mm/s)', 'Estado']],
+                body: riesgoPredictivoActual.map(r2 => [r2.maquina, r2.tempReciente.toFixed(1), r2.vibReciente.toFixed(2), 'Riesgo de falla próxima']),
+                theme: 'grid',
+                styles: { fontSize: 8.5, cellPadding: 2.5 },
+                headStyles: { fillColor: [rr, rg, rb], textColor: 255 },
+                bodyStyles: { textColor: [192, 57, 43] }
+            });
+            y = pdf.lastAutoTable.finalY + 8;
+        } else {
+            pdf.setTextColor(39, 174, 96);
+            pdf.setFontSize(9);
+            pdf.setFont(undefined, 'normal');
+            pdf.text('Ninguna máquina supera los umbrales de riesgo en este periodo.', margin, y);
+            y += 12;
+        }
+
+        // ---------- 10. Gráfica personalizada (solo si el usuario la generó) ----------
+        if (charts.personalizada && personalizadaData) {
+            const { varX, varY, labels, values } = personalizadaData;
+            const persStats = calcularStats(values);
+            const unidadesY = { produccion: 'unidades', defectos: 'defectos', eficiencia: '%', tiempo: 'min' };
+            const unidad = unidadesY[varY] || '';
+            const maxIdx = values.indexOf(persStats.max);
+            const minIdx = values.indexOf(persStats.min);
+
+            y = agregarSeccionPDF(pdf, {
+                y0: y, numero: 10, titulo: `Gráfica Personalizada: ${varY} por ${varX}`, colorHex: '#16a085',
+                chart: charts.personalizada,
+                statsHead: ['Promedio', 'Máximo', 'Mínimo', 'Desv. Estándar'],
+                statsBody: [[
+                    persStats.media.toFixed(1) + (unidad ? ' ' + unidad : ''),
+                    `${persStats.max}${unidad ? ' ' + unidad : ''} (${labels[maxIdx]})`,
+                    `${persStats.min}${unidad ? ' ' + unidad : ''} (${labels[minIdx]})`,
+                    persStats.desviacion.toFixed(1)
+                ]],
+                interpretacion: obtenerInterpretacion('interpretacionPersonalizada'),
+                margin, usableWidth, pageHeight
+            });
+        }
+
+        // ---------- 11. Recomendaciones ----------
+        if (data.recomendaciones && data.recomendaciones.length) {
+            y = checkPageBreak(pdf, y, 24, margin, pageHeight);
+            pdf.setFillColor(230, 126, 34);
+            pdf.rect(margin, y, usableWidth, 8, 'F');
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFontSize(11);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('11. Recomendaciones para Reducir Tiempos Muertos', margin + 3, y + 5.5);
+            y += 12;
+
+            pdf.autoTable({
+                startY: y,
+                margin: { left: margin, right: margin },
+                head: [['Prioridad', 'Título', 'Acción recomendada']],
+                body: data.recomendaciones.map(rec => [rec.prioridad, rec.titulo, rec.accion]),
+                theme: 'grid',
+                styles: { fontSize: 8.5, cellPadding: 2.5, overflow: 'linebreak' },
+                headStyles: { fillColor: [230, 126, 34], textColor: 255 },
+                columnStyles: { 0: { cellWidth: 22 }, 1: { cellWidth: 45 } },
+                didParseCell: function (c) {
+                    if (c.section === 'body' && c.column.index === 0) {
+                        const val = c.cell.raw;
+                        c.cell.styles.fontStyle = 'bold';
+                        c.cell.styles.textColor = val === 'Alta' ? [192, 57, 43] : val === 'Media' ? [211, 141, 20] : [39, 174, 96];
+                    }
+                }
+            });
+        }
+
+        // ---------- PIE DE PÁGINA ----------
+        const totalPaginas = pdf.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPaginas; i++) {
+            pdf.setPage(i);
+            pdf.setFontSize(8);
+            pdf.setTextColor(150, 150, 150);
+            pdf.text('Sistema de Manufactura de Plásticos - Reporte generado automáticamente', pageWidth / 2, pageHeight - 8, { align: 'center' });
+            pdf.text('Página ' + i + ' de ' + totalPaginas, pageWidth - margin, pageHeight - 8, { align: 'right' });
+        }
+
+        pdf.save(`Reporte_Analisis_Manufactura_${new Date().toISOString().slice(0, 10)}.pdf`);
+
+        loading.className = 'alert alert-success text-center';
+        loading.innerHTML = '<i class="fas fa-check-circle"></i> PDF generado correctamente';
+        setTimeout(() => loading.remove(), 3000);
+
+    } catch (error) {
+        console.error('Error generando PDF:', error);
+        loading.className = 'alert alert-danger text-center';
+        loading.innerHTML = '<i class="fas fa-exclamation-circle"></i> Error al generar PDF: ' + error.message;
+        setTimeout(() => loading.remove(), 4000);
+    }
+}
+
+
+/* ============================================================
+   GENERACIÓN DE EXCEL (SheetJS) — una hoja por categoría de datos,
+   cada una con su tabla y sus estadísticas al final
+   ============================================================ */
+
+// Convierte un arreglo de filas (aoa) en una hoja con ancho de columnas fijado
+function crearHoja(filas, anchos) {
+    const hoja = XLSX.utils.aoa_to_sheet(filas);
+    if (anchos) hoja['!cols'] = anchos.map(w => ({ wch: w }));
+    return hoja;
+}
+
+function exportarExcel() {
+    if (!datosActuales || !datosActuales.eficiencia_linea) {
+        alert('Primero aplica los filtros para tener datos que exportar');
+        return;
+    }
+
+    const data = datosActuales;
+    const wb = XLSX.utils.book_new();
+    const fi = document.getElementById('fechaInicio').value || 'N/A';
+    const ff = document.getElementById('fechaFin').value || 'N/A';
+
+    // ---------- Hoja 1: Resumen (KPIs + periodo del filtro) ----------
+    const resumenFilas = [
+        ['SISTEMA DE MANUFACTURA DE PLÁSTICOS - Reporte de Análisis'],
+        [`Generado: ${new Date().toLocaleDateString('es-ES')}  |  Periodo: ${fi} a ${ff}`],
+        [],
+        ['Indicador', 'Valor'],
+        ['Eficiencia Global (%)', data.kpis.eficiencia],
+        ['Total Fallas (Correctivos)', data.kpis.fallas],
+        ['Tiempo Muerto (horas)', data.kpis.tiempo_muerto],
+        ['Tasa de Calidad (%)', data.kpis.calidad]
+    ];
+    XLSX.utils.book_append_sheet(wb, crearHoja(resumenFilas, [30, 18]), 'Resumen');
+
+    // ---------- Hoja 2: Eficiencia por línea ----------
+    const effVals = data.eficiencia_linea.map(d => d.eficiencia);
+    const effStats = calcularStats(effVals);
+    const effFilas = [['Línea', 'Eficiencia (%)']];
+    data.eficiencia_linea.forEach(d => effFilas.push([d.linea, d.eficiencia]));
+    effFilas.push([]);
+    effFilas.push(['Promedio', +effStats.media.toFixed(1)]);
+    effFilas.push(['Máximo', effStats.max]);
+    effFilas.push(['Mínimo', effStats.min]);
+    effFilas.push(['Desv. Estándar', +effStats.desviacion.toFixed(1)]);
+    XLSX.utils.book_append_sheet(wb, crearHoja(effFilas, [22, 15]), 'Eficiencia Linea');
+
+    // ---------- Hoja 3: Fallas por máquina ----------
+    const fallasVals = data.fallas_maquina.map(d => d.fallas);
+    const fallasStats = calcularStats(fallasVals);
+    const totalFallas = fallasVals.reduce((a, b) => a + b, 0);
+    const fallasFilas = [['Máquina', 'Fallas', '% del Total']];
+    [...data.fallas_maquina].sort((a, b) => b.fallas - a.fallas).forEach(d => {
+        fallasFilas.push([d.maquina, d.fallas, totalFallas > 0 ? +((d.fallas / totalFallas) * 100).toFixed(1) : 0]);
+    });
+    fallasFilas.push([]);
+    fallasFilas.push(['Promedio', +fallasStats.media.toFixed(1), '']);
+    fallasFilas.push(['Máximo', fallasStats.max, '']);
+    fallasFilas.push(['Mínimo', fallasStats.min, '']);
+    fallasFilas.push(['Desv. Estándar', +fallasStats.desviacion.toFixed(1), '']);
+    XLSX.utils.book_append_sheet(wb, crearHoja(fallasFilas, [22, 12, 14]), 'Fallas Maquina');
+
+    // ---------- Hoja 4: Defectos por producto ----------
+    const defVals = data.defectos_producto.map(d => d.defectos);
+    const defStats = calcularStats(defVals);
+    const defFilas = [['Producto', 'Defectos']];
+    [...data.defectos_producto].sort((a, b) => b.defectos - a.defectos).forEach(d => defFilas.push([d.producto, d.defectos]));
+    defFilas.push([]);
+    defFilas.push(['Promedio', +defStats.media.toFixed(1)]);
+    defFilas.push(['Máximo', defStats.max]);
+    defFilas.push(['Mínimo', defStats.min]);
+    defFilas.push(['Desv. Estándar', +defStats.desviacion.toFixed(1)]);
+    XLSX.utils.book_append_sheet(wb, crearHoja(defFilas, [22, 15]), 'Defectos Producto');
+
+    // ---------- Hoja 5: Productividad por operador ----------
+    const prodVals = data.productividad_operador.map(d => d.productividad);
+    const prodStats = calcularStats(prodVals);
+    const prodFilas = [['Operador', 'Unidades/Hora']];
+    [...data.productividad_operador].sort((a, b) => b.productividad - a.productividad).forEach(d => prodFilas.push([d.operador, d.productividad]));
+    prodFilas.push([]);
+    prodFilas.push(['Promedio', +prodStats.media.toFixed(1)]);
+    prodFilas.push(['Máximo', prodStats.max]);
+    prodFilas.push(['Mínimo', prodStats.min]);
+    prodFilas.push(['Desv. Estándar', +prodStats.desviacion.toFixed(1)]);
+    XLSX.utils.book_append_sheet(wb, crearHoja(prodFilas, [20, 16]), 'Productividad Operador');
+
+    // ---------- Hoja 6: Causas de paro ----------
+    const paroVals = data.causas_paro.map(d => d.total);
+    const totalParos = paroVals.reduce((a, b) => a + b, 0);
+    const paroFilas = [['Causa', 'Cantidad', '% del Total']];
+    [...data.causas_paro].sort((a, b) => b.total - a.total).forEach(d => {
+        paroFilas.push([d.causa, d.total, totalParos > 0 ? +((d.total / totalParos) * 100).toFixed(1) : 0]);
+    });
+    XLSX.utils.book_append_sheet(wb, crearHoja(paroFilas, [26, 12, 14]), 'Causas Paro');
+
+    // ---------- Hoja 7: Sensores (temperatura, vibración, presión) ----------
+    const temps = data.prediccion_fallas.map(d => d.temperatura);
+    const vibs = data.prediccion_fallas.map(d => d.vibracion);
+    const presiones = data.prediccion_fallas.map(d => d.presion);
+    const tempStats = calcularStats(temps);
+    const vibStats = calcularStats(vibs);
+    const presStats = calcularStats(presiones);
+    const r = pearsonCorr(temps, vibs);
+
+    const sensoresFilas = [['Fecha', 'Temperatura (°C)', 'Vibración (mm/s)', 'Presión (bar)']];
+    data.prediccion_fallas.forEach(d => sensoresFilas.push([d.fecha, d.temperatura, d.vibracion, d.presion]));
+    sensoresFilas.push([]);
+    sensoresFilas.push(['Variable', 'Promedio', 'Desv. Estándar', 'Tendencia']);
+    sensoresFilas.push(['Temperatura (°C)', +tempStats.media.toFixed(1), +tempStats.desviacion.toFixed(1), calcularTendencia(temps)]);
+    sensoresFilas.push(['Vibración (mm/s)', +vibStats.media.toFixed(2), +vibStats.desviacion.toFixed(2), calcularTendencia(vibs)]);
+    sensoresFilas.push(['Presión (bar)', +presStats.media.toFixed(1), +presStats.desviacion.toFixed(1), calcularTendencia(presiones)]);
+    sensoresFilas.push([]);
+    sensoresFilas.push(['Coef. de correlación Temp-Vibración (r)', r.toFixed(3), interpretarR(r)]);
+    XLSX.utils.book_append_sheet(wb, crearHoja(sensoresFilas, [24, 16, 16, 16]), 'Sensores');
+
+    // ---------- Hoja 8: Clusters de máquinas (k-means real) ----------
+    if (clustersActuales && clustersActuales.length > 0) {
+        const ordenRiesgo = { Alto: 0, Medio: 1, Bajo: 2 };
+        const clustersFilas = [['Máquina', 'Temperatura Promedio (°C)', 'Vibración Promedio (mm/s)', 'Nivel de Riesgo']];
+        [...clustersActuales]
+            .sort((a, b) => ordenRiesgo[a.riesgo] - ordenRiesgo[b.riesgo])
+            .forEach(m => clustersFilas.push([m.maquina, +m.tempProm.toFixed(1), +m.vibProm.toFixed(2), m.riesgo]));
+        XLSX.utils.book_append_sheet(wb, crearHoja(clustersFilas, [22, 22, 22, 14]), 'Clusters');
+    }
+
+    // ---------- Hoja 9: Mantenimiento Predictivo ----------
+    const riesgoFilas = [['Máquina', 'Temp. Reciente (°C)', 'Vibración Reciente (mm/s)', 'Estado']];
+    if (riesgoPredictivoActual && riesgoPredictivoActual.length > 0) {
+        riesgoPredictivoActual.forEach(r2 => riesgoFilas.push([r2.maquina, +r2.tempReciente.toFixed(1), +r2.vibReciente.toFixed(2), 'Riesgo de falla próxima']));
+    } else {
+        riesgoFilas.push(['Ninguna máquina en riesgo en este periodo', '', '', '']);
+    }
+    XLSX.utils.book_append_sheet(wb, crearHoja(riesgoFilas, [22, 18, 22, 24]), 'Riesgo Predictivo');
+
+    // ---------- Hoja 10: Gráfica personalizada (solo si el usuario la generó) ----------
+    if (personalizadaData) {
+        const { varX, varY, labels, values } = personalizadaData;
+        const persStats = calcularStats(values);
+        const persFilas = [[varX.charAt(0).toUpperCase() + varX.slice(1), varY.charAt(0).toUpperCase() + varY.slice(1)]];
+        labels.forEach((label, i) => persFilas.push([label, values[i]]));
+        persFilas.push([]);
+        persFilas.push(['Promedio', +persStats.media.toFixed(1)]);
+        persFilas.push(['Máximo', persStats.max]);
+        persFilas.push(['Mínimo', persStats.min]);
+        persFilas.push(['Desv. Estándar', +persStats.desviacion.toFixed(1)]);
+        XLSX.utils.book_append_sheet(wb, crearHoja(persFilas, [22, 15]), 'Grafica Personalizada');
+    }
+
+    // ---------- Hoja 11: Recomendaciones ----------
+    if (data.recomendaciones && data.recomendaciones.length) {
+        const recFilas = [['Prioridad', 'Título', 'Descripción', 'Acción recomendada']];
+        data.recomendaciones.forEach(rec => recFilas.push([rec.prioridad, rec.titulo, rec.descripcion, rec.accion]));
+        XLSX.utils.book_append_sheet(wb, crearHoja(recFilas, [12, 26, 40, 40]), 'Recomendaciones');
+    }
+
+    // ---------- Guardar archivo ----------
+    XLSX.writeFile(wb, `Reporte_Manufactura_${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
+
+
+/* ============================================================
+   INICIALIZACIÓN
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('📊 Página de Análisis cargada');
+    cargarFiltros();
+    aplicarFiltros();
+    limpiarPersonalizada();
+});
+</script>
+
+<style>
+    .border-left-4 { border-left: 4px solid; }
+    .border-success { border-left-color: #27ae60; }
+    .border-warning { border-left-color: #f39c12; }
+    .border-danger { border-left-color: #e74c3c; }
+    .bg-purple { background-color: #9b59b6 !important; }
+    .text-purple { color: #9b59b6 !important; }
+
+    #tituloReporte {
+        display: none;
+    }
+
+    @media print {
+        #tituloReporte { display: block !important; }
+        .btn, .navbar, .sidebar, .stat-card { display: none !important; }
+        .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+        .card-header { background-color: #f8f9fa !important; color: #2c3e50 !important; }
+    }
+</style>
+{% endblock %}

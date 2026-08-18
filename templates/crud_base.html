@@ -1,0 +1,258 @@
+<!-- templates/crud_base.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col">
+        <button class="btn btn-primary" onclick="abrirModalCrear()">
+            <i class="fas fa-plus"></i> Nuevo
+        </button>
+        <button class="btn btn-outline-secondary" onclick="cargarDatos()">
+            <i class="fas fa-sync"></i> Actualizar
+        </button>
+    </div>
+</div>
+
+<div class="table-container">
+    <table class="table table-hover" id="dataTable">
+        <thead>
+            <tr>
+                {% block table_headers %}{% endblock %}
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <tr>
+                <td colspan="10" class="text-center text-muted">Cargando datos...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal Crear/Editar -->
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Nuevo Registro</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="dataForm">
+                    {% block form_fields %}{% endblock %}
+                    <input type="hidden" id="editId" value="">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarRegistro()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const API_URL = '{% block api_url %}/api{% endblock %}';
+    let editando = false;
+
+    // ==================== CARGAR DATOS ====================
+    async function cargarDatos() {
+        try {
+            console.log('📡 Cargando datos desde:', API_URL);
+            const response = await fetch(API_URL);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            console.log('📊 Datos recibidos:', data.length || 0, 'registros');
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            // Verificar si existe la función renderizarTabla en el template hijo
+            if (typeof renderizarTabla === 'function') {
+                renderizarTabla(data);
+            } else {
+                console.warn('⚠️ La función renderizarTabla no está definida en el template hijo');
+                document.getElementById('tableBody').innerHTML = 
+                    '<tr><td colspan="10" class="text-center text-warning">La función renderizarTabla no está definida</td></tr>';
+            }
+        } catch (error) {
+            console.error('❌ Error cargando datos:', error);
+            document.getElementById('tableBody').innerHTML = 
+                `<tr><td colspan="10" class="text-center text-danger">Error al cargar datos: ${error.message}</td></tr>`;
+        }
+    }
+
+    // ==================== ABRIR MODAL CREAR ====================
+    function abrirModalCrear() {
+        editando = false;
+        document.getElementById('modalTitle').textContent = 'Nuevo Registro';
+        document.getElementById('editId').value = '';
+        document.getElementById('dataForm').reset();
+        
+        // Llamar a función específica para llenar selects si existe
+        if (typeof llenarSelects === 'function') {
+            llenarSelects();
+        }
+        
+        // Establecer fecha actual si existe el campo
+        const fechaInput = document.querySelector('[name="fecha"]');
+        if (fechaInput && fechaInput.type === 'datetime-local') {
+            const ahora = new Date();
+            fechaInput.value = ahora.toISOString().slice(0, 16);
+        }
+        
+        const modal = new bootstrap.Modal(document.getElementById('createModal'));
+        modal.show();
+    }
+
+    // ==================== ABRIR MODAL EDITAR ====================
+    function abrirModalEditar(id) {
+        editando = true;
+        document.getElementById('modalTitle').textContent = 'Editar Registro';
+        document.getElementById('editId').value = id;
+        
+        // Primero llenar selects si existe la función
+        if (typeof llenarSelects === 'function') {
+            llenarSelects();
+        }
+        
+        // Cargar datos del registro
+        fetch(`${API_URL}/${id}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                // Llenar formulario
+                if (typeof llenarFormulario === 'function') {
+                    llenarFormulario(data);
+                } else {
+                    // Llenado genérico
+                    Object.keys(data).forEach(key => {
+                        const input = document.querySelector(`[name="${key}"]`);
+                        if (input) {
+                            if (key === 'fecha' && data[key]) {
+                                const date = new Date(data[key]);
+                                if (!isNaN(date.getTime())) {
+                                    input.value = date.toISOString().slice(0, 16);
+                                }
+                            } else if (input.type === 'checkbox') {
+                                input.checked = data[key] === true;
+                            } else if (input.type === 'select-one') {
+                                // Buscar la opción con el valor
+                                const options = input.options;
+                                for (let i = 0; i < options.length; i++) {
+                                    if (options[i].value == data[key]) {
+                                        input.selectedIndex = i;
+                                        break;
+                                    }
+                                }
+                            } else {
+                                input.value = data[key] || '';
+                            }
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error cargando datos para editar:', error);
+                alert('Error al cargar los datos: ' + error.message);
+            });
+        
+        const modal = new bootstrap.Modal(document.getElementById('createModal'));
+        modal.show();
+    }
+
+    // ==================== GUARDAR REGISTRO ====================
+    async function guardarRegistro() {
+        const form = document.getElementById('dataForm');
+        const formData = new FormData(form);
+        const data = {};
+        formData.forEach((value, key) => {
+            if (value !== '') {
+                data[key] = value;
+            }
+        });
+        
+        const id = document.getElementById('editId').value;
+        
+        // Convertir strings a números donde sea necesario
+        Object.keys(data).forEach(key => {
+            if (!isNaN(data[key]) && data[key] !== '') {
+                data[key] = Number(data[key]);
+            }
+        });
+
+        const method = editando ? 'PUT' : 'POST';
+        const url = editando ? `${API_URL}/${id}` : API_URL;
+
+        console.log('📤 Enviando:', { method, url, data });
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            console.log('📥 Respuesta:', result);
+            
+            if (response.ok) {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('createModal'));
+                if (modal) modal.hide();
+                cargarDatos();
+                alert(editando ? '✅ Registro actualizado' : '✅ Registro creado');
+            } else {
+                alert('❌ Error: ' + (result.error || 'Error al guardar'));
+            }
+        } catch (error) {
+            console.error('❌ Error guardando:', error);
+            alert('❌ Error al guardar: ' + error.message);
+        }
+    }
+
+    // ==================== ELIMINAR REGISTRO ====================
+    async function eliminarRegistro(id) {
+        if (!confirm('¿Está seguro de eliminar este registro?')) return;
+        
+        try {
+            const response = await fetch(`${API_URL}/${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                cargarDatos();
+                alert('✅ Registro eliminado');
+            } else {
+                const error = await response.json();
+                alert('❌ Error: ' + (error.error || 'Error al eliminar'));
+            }
+        } catch (error) {
+            console.error('❌ Error eliminando:', error);
+            alert('❌ Error al eliminar: ' + error.message);
+        }
+    }
+
+    // ==================== INICIALIZAR ====================
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 crud_base.html cargado, API_URL:', API_URL);
+        // cargarDatos() se llama automáticamente
+    });
+    
+    // Cargar datos al inicio
+    document.addEventListener('DOMContentLoaded', cargarDatos);
+</script>
+{% endblock %}

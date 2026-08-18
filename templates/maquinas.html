@@ -1,0 +1,135 @@
+<!-- templates/maquinas.html -->
+{% extends "crud_base.html" %}
+
+{% block title %}Máquinas{% endblock %}
+{% block page_title %}Gestión de Máquinas{% endblock %}
+{% block api_url %}/api/maquinas{% endblock %}
+
+{% block table_headers %}
+    <th>Nombre</th>
+    <th>Tipo</th>
+    <th>Marca</th>
+    <th>Estado</th>
+    <th>Ubicación</th>
+    <th>Horas Operación</th>
+    <th>Lecturas</th>
+{% endblock %}
+
+{% block form_fields %}
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control" name="nombre" required>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Tipo</label>
+            <select class="form-select" name="tipo" required>
+                <option value="CNC">CNC</option>
+                <option value="Impresora 3D">Impresora 3D</option>
+                <option value="Robot">Robot</option>
+                <option value="Moldadora">Moldadora</option>
+                <option value="Ensambladora">Ensambladora</option>
+                <option value="Soldadora">Soldadora</option>
+                <option value="Pulidora">Pulidora</option>
+                <option value="Cortadora">Cortadora</option>
+            </select>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Marca</label>
+            <input type="text" class="form-control" name="marca" required>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Modelo</label>
+            <input type="text" class="form-control" name="modelo" required>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label class="form-label">Estado</label>
+            <select class="form-select" name="estado" required>
+                <option value="operando">Operando</option>
+                <option value="mantenimiento">Mantenimiento</option>
+                <option value="parada">Parada</option>
+            </select>
+        </div>
+        <div class="col-md-12 mb-3">
+            <label class="form-label">Ubicación</label>
+            <input type="text" class="form-control" name="ubicacion" placeholder="Planta X - Línea Y">
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Horas de Operación</label>
+            <input type="number" class="form-control" name="horas_operacion" value="1000">
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Temperatura Operativa (°C)</label>
+            <input type="number" step="0.1" class="form-control" name="temperatura_operativa" value="70">
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Presión Operativa</label>
+            <input type="number" step="0.1" class="form-control" name="presion_operativa" value="50">
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Vibración Operativa</label>
+            <input type="number" step="0.01" class="form-control" name="vibracion_operativa" value="0.5">
+        </div>
+        <div class="col-md-12 mb-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="tiene_historial_anomalias" value="true">
+                <label class="form-check-label">Tiene historial de anomalías</label>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    function renderizarTabla(data) {
+        const tbody = document.getElementById('tableBody');
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay máquinas</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = data.map(item => `
+            <tr>
+                <td><strong>${item.nombre || 'N/A'}</strong></td>
+                <td><span class="badge bg-info">${item.tipo || 'N/A'}</span></td>
+                <td>${item.marca || 'N/A'}</td>
+                <td>
+                    <span class="badge ${item.estado === 'operando' ? 'bg-success' : item.estado === 'mantenimiento' ? 'bg-warning' : 'bg-danger'}">
+                        ${item.estado || 'N/A'}
+                    </span>
+                </td>
+                <td><small>${item.ubicacion || 'N/A'}</small></td>
+                <td>${item.horas_operacion?.toLocaleString() || 0}</td>
+                <td>
+                    <span class="badge bg-secondary">${item.lecturas_sensores?.length || 0}</span>
+                    ${item.tiene_historial_anomalias ? '<i class="fas fa-exclamation-triangle text-warning ms-1" title="Tiene anomalías"></i>' : ''}
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('${item._id}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('${item._id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function llenarFormulario(data) {
+        Object.keys(data).forEach(key => {
+            const input = document.querySelector(`[name="${key}"]`);
+            if (input) {
+                if (input.type === 'checkbox') {
+                    input.checked = data[key] === true;
+                } else {
+                    input.value = data[key] || '';
+                }
+            }
+        });
+    }
+
+    console.log('✅ maquinas.html cargado correctamente');
+</script>
+{% endblock %}

@@ -1,0 +1,118 @@
+<!-- templates/dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard de Producción{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Estadísticas -->
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon text-primary">
+                <i class="fas fa-box"></i>
+            </div>
+            <div class="stat-number" id="total-productos">-</div>
+            <div class="stat-label">Productos</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon text-success">
+                <i class="fas fa-microchip"></i>
+            </div>
+            <div class="stat-number" id="total-maquinas">-</div>
+            <div class="stat-label">Máquinas</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon text-warning">
+                <i class="fas fa-gears"></i>
+            </div>
+            <div class="stat-number" id="total-producciones">-</div>
+            <div class="stat-label">Registros de Producción</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon text-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-number" id="total-defectos">-</div>
+            <div class="stat-label">Defectos Registrados</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Gráfico: Producción vs Defectos -->
+    <div class="col-lg-8 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-line me-2"></i> Producción y Defectos (Últimos 30 días)
+            </div>
+            <div class="card-body">
+                <canvas id="produccionChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gráfico: Estado de Máquinas -->
+    <div class="col-lg-4 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-pie me-2"></i> Estado de Máquinas
+            </div>
+            <div class="card-body">
+                <canvas id="estadoMaquinasChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Gráfico: Defectos por Producto -->
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-bar me-2"></i> Defectos por Producto
+            </div>
+            <div class="card-body">
+                <canvas id="defectosProductoChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gráfico: Top Productos -->
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-trophy me-2"></i> Top 5 Productos Más Producidos
+            </div>
+            <div class="card-body">
+                <canvas id="topProductosChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-clock me-2"></i> Últimas Actividades
+            </div>
+            <div class="card-body">
+                <div id="ultimas-actividades" style="max-height: 300px; overflow-y: auto;">
+                    <p class="text-muted">Cargando actividades...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

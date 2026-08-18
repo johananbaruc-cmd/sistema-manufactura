@@ -1,0 +1,130 @@
+<!-- templates/productos.html -->
+{% extends "crud_base.html" %}
+
+{% block title %}Productos{% endblock %}
+{% block page_title %}Gestión de Productos{% endblock %}
+{% block api_url %}/api/productos{% endblock %}
+
+{% block table_headers %}
+    <th>Nombre</th>
+    <th>Categoría</th>
+    <th>Código</th>
+    <th>Costo</th>
+    <th>Precio</th>
+    <th>Stock</th>
+    <th>Demanda</th>
+    <th>Estado</th>
+{% endblock %}
+
+{% block form_fields %}
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control" name="nombre" required>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Categoría</label>
+            <select class="form-select" name="categoria" required>
+                <option value="Electrónica">Electrónica</option>
+                <option value="Mecánica">Mecánica</option>
+                <option value="Hidráulica">Hidráulica</option>
+                <option value="Neumática">Neumática</option>
+                <option value="Automotriz">Automotriz</option>
+                <option value="Aeroespacial">Aeroespacial</option>
+                <option value="Alimentación">Alimentación</option>
+                <option value="Textil">Textil</option>
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Código</label>
+            <input type="text" class="form-control" name="codigo" required>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Descripción</label>
+            <textarea class="form-control" name="descripcion" rows="2"></textarea>
+        </div>
+        <div class="col-md-3 mb-3">
+            <label class="form-label">Costo</label>
+            <input type="number" step="0.01" class="form-control" name="costo" required>
+        </div>
+        <div class="col-md-3 mb-3">
+            <label class="form-label">Precio</label>
+            <input type="number" step="0.01" class="form-control" name="precio" required>
+        </div>
+        <div class="col-md-3 mb-3">
+            <label class="form-label">Stock Mínimo</label>
+            <input type="number" class="form-control" name="stock_minimo" value="10">
+        </div>
+        <div class="col-md-3 mb-3">
+            <label class="form-label">Stock Actual</label>
+            <input type="number" class="form-control" name="stock_actual" value="50">
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Demanda Mensual</label>
+            <input type="number" class="form-control" name="demanda_promedio_mensual" value="100">
+        </div>
+        <div class="col-md-6 mb-3">
+            <label class="form-label">Tiempo Fabricación (min)</label>
+            <input type="number" class="form-control" name="tiempo_fabricacion_minutos" value="30">
+        </div>
+        <div class="col-md-12 mb-3">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="activo" value="true" checked>
+                <label class="form-check-label">Activo</label>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    function renderizarTabla(data) {
+        const tbody = document.getElementById('tableBody');
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No hay productos</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = data.map(item => `
+            <tr>
+                <td><strong>${item.nombre || 'N/A'}</strong></td>
+                <td><span class="badge bg-info">${item.categoria || 'N/A'}</span></td>
+                <td><code>${item.codigo || 'N/A'}</code></td>
+                <td>$${item.costo?.toFixed(2) || '0.00'}</td>
+                <td>$${item.precio?.toFixed(2) || '0.00'}</td>
+                <td>${item.stock_actual || 0}</td>
+                <td>${item.demanda_promedio_mensual || 0}</td>
+                <td>
+                    <span class="badge ${item.activo ? 'bg-success' : 'bg-danger'}">
+                        ${item.activo ? 'Activo' : 'Inactivo'}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('${item._id}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('${item._id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function llenarFormulario(data) {
+        Object.keys(data).forEach(key => {
+            const input = document.querySelector(`[name="${key}"]`);
+            if (input) {
+                if (input.type === 'checkbox') {
+                    input.checked = data[key] === true;
+                } else {
+                    input.value = data[key] || '';
+                }
+            }
+        });
+    }
+
+    console.log('✅ productos.html cargado correctamente');
+</script>
+{% endblock %}

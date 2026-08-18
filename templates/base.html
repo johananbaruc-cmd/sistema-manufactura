@@ -1,0 +1,267 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Manufactura - {% block title %}Dashboard{% endblock %}</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- CSS Personalizado -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <style>
+        /* Estilos del Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: #2c3e50;
+            color: white;
+            padding: 0;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-brand {
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-brand i {
+            color: #3498db;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.7);
+            padding: 12px 20px;
+            border-radius: 0;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .sidebar .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .sidebar .nav-link.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .sidebar .nav-link i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .stat-card .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .stat-card .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        /* Tables */
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+
+        .table thead {
+            background: #2c3e50;
+            color: white;
+        }
+
+        .table th {
+            border: none;
+            padding: 12px;
+            font-weight: 600;
+        }
+
+        .table td {
+            padding: 10px;
+            vertical-align: middle;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .sidebar .nav-link {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+            .sidebar-brand {
+                padding: 15px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fas fa-industry"></i>
+            <span>Sistema Manufactura</span>
+        </div>
+        <nav class="nav flex-column">
+            <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="/">
+                <i class="fas fa-chart-pie"></i> Dashboard
+            </a>
+            <a class="nav-link {% if request.endpoint == 'productos_page' %}active{% endif %}" href="/productos">
+                <i class="fas fa-box"></i> Productos
+            </a>
+            <a class="nav-link {% if request.endpoint == 'materia_prima_page' %}active{% endif %}" href="/materia_prima">
+                <i class="fas fa-cubes"></i> Materia Prima
+            </a>
+            <a class="nav-link {% if request.endpoint == 'maquinas_page' %}active{% endif %}" href="/maquinas">
+                <i class="fas fa-microchip"></i> Máquinas
+            </a>
+            <a class="nav-link {% if request.endpoint == 'produccion_page' %}active{% endif %}" href="/produccion">
+                <i class="fas fa-gears"></i> Producción
+            </a>
+            <a class="nav-link {% if request.endpoint == 'calidad_page' %}active{% endif %}" href="/calidad">
+                <i class="fas fa-check-double"></i> Calidad
+            </a>
+            <a class="nav-link {% if request.endpoint == 'mantenimiento_page' %}active{% endif %}" href="/mantenimiento">
+                <i class="fas fa-wrench"></i> Mantenimiento
+            </a>
+            <a class="nav-link {% if request.endpoint == 'paros_page' %}active{% endif %}" href="/paros">
+                <i class="fas fa-stop-circle"></i> Paros
+            </a>
+       
+            <a class="nav-link {% if request.endpoint == 'analisis_page' %}active{% endif %}" href="/analisis">
+                <i class="fas fa-chart-bar"></i> Análisis
+            </a>
+
+  
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+                <span class="navbar-brand">{% block page_title %}Dashboard{% endblock %}</span>
+                <div class="d-flex">
+                    <span class="badge bg-success me-2" id="status-indicator">
+                        <i class="fas fa-circle"></i> Conectado
+                    </span>
+                    <span class="badge bg-primary" id="datetime-display"></span>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid mt-4">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- JS Personalizado -->
+    <script>
+        // Mostrar fecha/hora actual
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('datetime-display').textContent = 
+                now.toLocaleString('es-ES');
+        }
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+
+        // Verificar estado del backend
+        async function checkHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                const indicator = document.getElementById('status-indicator');
+                if (data.status === 'ok') {
+                    indicator.className = 'badge bg-success me-2';
+                    indicator.innerHTML = '<i class="fas fa-circle"></i> Conectado';
+                } else {
+                    indicator.className = 'badge bg-danger me-2';
+                    indicator.innerHTML = '<i class="fas fa-circle"></i> Desconectado';
+                }
+            } catch (error) {
+                const indicator = document.getElementById('status-indicator');
+                indicator.className = 'badge bg-danger me-2';
+                indicator.innerHTML = '<i class="fas fa-circle"></i> Error de conexión';
+            }
+        }
+        checkHealth();
+        setInterval(checkHealth, 30000);
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
