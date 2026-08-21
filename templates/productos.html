@@ -1,73 +1,246 @@
 <!-- templates/productos.html -->
+<!-- 
+    ==========================================
+    PLANTILLA: Gestión de Productos
+    ==========================================
+    Este archivo extiende (hereda) de 'crud_base.html'
+    que contiene la estructura base de todas las páginas CRUD.
+    Aquí definimos lo específico del módulo de Productos.
+    Este módulo es el CATÁLOGO CENTRAL del sistema.
+-->
+
 {% extends "crud_base.html" %}
+<!-- 
+    QUÉ: Hereda de la plantilla base CRUD
+    PARA QUÉ: Reutilizar estructura común de formularios, tablas y modales
+-->
+
+<!-- ========================================== -->
+<!-- BLOQUES DE TÍTULO Y CONFIGURACIÓN          -->
+<!-- ========================================== -->
 
 {% block title %}Productos{% endblock %}
+<!-- 
+    QUÉ: Título de la pestaña del navegador
+    PARA QUÉ: Identificar la página como "Productos"
+-->
+
 {% block page_title %}Gestión de Productos{% endblock %}
+<!-- 
+    QUÉ: Título principal que se muestra en el encabezado
+    PARA QUÉ: Dar contexto al usuario sobre el módulo
+-->
+
 {% block api_url %}/api/productos{% endblock %}
+<!-- 
+    QUÉ: URL del endpoint API para productos
+    PARA QUÉ: La plantilla base usa esta URL para:
+             - GET: Obtener todos los productos
+             - POST: Crear nuevo producto
+             - PUT: Actualizar producto existente
+             - DELETE: Eliminar producto
+-->
+
+<!-- ========================================== -->
+<!-- ENCABEZADOS DE LA TABLA                    -->
+<!-- ========================================== -->
 
 {% block table_headers %}
-    <th>Nombre</th>
-    <th>Categoría</th>
-    <th>Código</th>
-    <th>Costo</th>
-    <th>Precio</th>
-    <th>Stock</th>
-    <th>Demanda</th>
-    <th>Estado</th>
+    <!-- 
+        QUÉ: Define las columnas que tendrá la tabla
+        PARA QUÉ: La plantilla base usa estos encabezados
+                 para construir la tabla dinámicamente
+    -->
+    <th>Nombre</th>           <!-- Nombre del producto -->
+    <th>Categoría</th>        <!-- Categoría a la que pertenece -->
+    <th>Código</th>           <!-- Código identificador (SKU) -->
+    <th>Costo</th>            <!-- Costo de producción -->
+    <th>Precio</th>           <!-- Precio de venta -->
+    <th>Stock</th>            <!-- Cantidad disponible en inventario -->
+    <th>Demanda</th>          <!-- Demanda mensual promedio -->
+    <th>Estado</th>           <!-- Activo/Inactivo -->
 {% endblock %}
 
+<!-- ========================================== -->
+<!-- CAMPOS DEL FORMULARIO                      -->
+<!-- ========================================== -->
+
 {% block form_fields %}
+    <!-- 
+        QUÉ: Define todos los campos del formulario de creación/edición
+        PARA QUÉ: La plantilla base usa estos campos para construir
+                 el formulario modal de manera dinámica
+    -->
+    
     <div class="row">
+        <!-- ======================================== -->
+        <!-- PRIMERA FILA: Nombre y Categoría         -->
+        <!-- ======================================== -->
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Nombre
+                QUÉ: Campo de texto
+                PARA QUÉ: Identificar el producto de manera clara
+                required: Campo obligatorio
+                Ejemplo: "Tornillo Hexagonal M8"
+            -->
             <label class="form-label">Nombre</label>
             <input type="text" class="form-control" name="nombre" required>
         </div>
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Categoría
+                QUÉ: Selector con 8 categorías predefinidas
+                PARA QUÉ: Clasificar el producto por su área de aplicación
+                required: Campo obligatorio
+                Electrónica: Componentes electrónicos, PCBs
+                Mecánica: Piezas mecánicas, engranajes
+                Hidráulica: Componentes hidráulicos, bombas
+                Neumática: Componentes neumáticos, cilindros
+                Automotriz: Piezas para vehículos
+                Aeroespacial: Componentes para aviones
+                Alimentación: Productos alimenticios
+                Textil: Productos textiles, telas
+            -->
             <label class="form-label">Categoría</label>
             <select class="form-select" name="categoria" required>
-                <option value="Electrónica">Electrónica</option>
-                <option value="Mecánica">Mecánica</option>
-                <option value="Hidráulica">Hidráulica</option>
-                <option value="Neumática">Neumática</option>
-                <option value="Automotriz">Automotriz</option>
-                <option value="Aeroespacial">Aeroespacial</option>
-                <option value="Alimentación">Alimentación</option>
-                <option value="Textil">Textil</option>
+                <option value="Electrónica">Electrónica</option>     <!-- Componentes electrónicos -->
+                <option value="Mecánica">Mecánica</option>           <!-- Piezas mecánicas -->
+                <option value="Hidráulica">Hidráulica</option>       <!-- Sistemas hidráulicos -->
+                <option value="Neumática">Neumática</option>         <!-- Sistemas neumáticos -->
+                <option value="Automotriz">Automotriz</option>       <!-- Industria automotriz -->
+                <option value="Aeroespacial">Aeroespacial</option>   <!-- Industria aeroespacial -->
+                <option value="Alimentación">Alimentación</option>   <!-- Industria alimenticia -->
+                <option value="Textil">Textil</option>               <!-- Industria textil -->
             </select>
         </div>
+        
+        <!-- ======================================== -->
+        <!-- SEGUNDA FILA: Código y Descripción       -->
+        <!-- ======================================== -->
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Código
+                QUÉ: Campo de texto
+                PARA QUÉ: Identificador único del producto (SKU/Part Number)
+                required: Campo obligatorio
+                Ejemplo: "TOR-M8-001", "PCB-1234"
+                NOTA: Permite búsqueda y clasificación rápida
+            -->
             <label class="form-label">Código</label>
             <input type="text" class="form-control" name="codigo" required>
         </div>
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Descripción
+                QUÉ: Área de texto multilínea
+                PARA QUÉ: Detalles técnicos y especificaciones
+                rows="2": Altura inicial de 2 líneas
+                NOTA: No es obligatorio, pero útil para especificaciones
+            -->
             <label class="form-label">Descripción</label>
             <textarea class="form-control" name="descripcion" rows="2"></textarea>
         </div>
+        
+        <!-- ======================================== -->
+        <!-- TERCERA FILA: Costo, Precio y Stock      -->
+        <!-- ======================================== -->
+        
         <div class="col-md-3 mb-3">
+            <!-- 
+                CAMPO: Costo
+                QUÉ: Input numérico con decimales
+                PARA QUÉ: Registrar el costo de producción del producto
+                step="0.01": Permite centésimas (moneda)
+                required: Campo obligatorio
+                NOTA: Costo = Materia prima + Mano de obra + Gastos
+            -->
             <label class="form-label">Costo</label>
             <input type="number" step="0.01" class="form-control" name="costo" required>
         </div>
+        
         <div class="col-md-3 mb-3">
+            <!-- 
+                CAMPO: Precio
+                QUÉ: Input numérico con decimales
+                PARA QUÉ: Registrar el precio de venta al cliente
+                step="0.01": Permite centésimas (moneda)
+                required: Campo obligatorio
+                NOTA: Precio > Costo para obtener margen de ganancia
+            -->
             <label class="form-label">Precio</label>
             <input type="number" step="0.01" class="form-control" name="precio" required>
         </div>
+        
         <div class="col-md-3 mb-3">
+            <!-- 
+                CAMPO: Stock Mínimo
+                QUÉ: Input numérico
+                PARA QUÉ: Definir el nivel mínimo de inventario
+                value="10": Valor por defecto
+                NOTA: Se usa para alertas de reabastecimiento
+            -->
             <label class="form-label">Stock Mínimo</label>
             <input type="number" class="form-control" name="stock_minimo" value="10">
         </div>
+        
         <div class="col-md-3 mb-3">
+            <!-- 
+                CAMPO: Stock Actual
+                QUÉ: Input numérico
+                PARA QUÉ: Registrar la cantidad disponible en inventario
+                value="50": Valor por defecto
+                NOTA: Se actualiza con producción y ventas
+            -->
             <label class="form-label">Stock Actual</label>
             <input type="number" class="form-control" name="stock_actual" value="50">
         </div>
+        
+        <!-- ======================================== -->
+        <!-- CUARTA FILA: Demanda y Tiempo Fabricación -->
+        <!-- ======================================== -->
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Demanda Mensual
+                QUÉ: Input numérico
+                PARA QUÉ: Registrar la demanda promedio mensual
+                value="100": Valor por defecto
+                NOTA: Se usa para planificar producción y compras
+            -->
             <label class="form-label">Demanda Mensual</label>
             <input type="number" class="form-control" name="demanda_promedio_mensual" value="100">
         </div>
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Tiempo Fabricación
+                QUÉ: Input numérico
+                PARA QUÉ: Registrar el tiempo que toma fabricar una unidad
+                value="30": Valor por defecto (30 minutos)
+                NOTA: Se usa para calcular capacidad de producción
+            -->
             <label class="form-label">Tiempo Fabricación (min)</label>
             <input type="number" class="form-control" name="tiempo_fabricacion_minutos" value="30">
         </div>
+        
+        <!-- ======================================== -->
+        <!-- QUINTA FILA: Estado Activo/Inactivo      -->
+        <!-- ======================================== -->
+        
         <div class="col-md-12 mb-3">
+            <!-- 
+                CAMPO: Activo
+                QUÉ: Checkbox marcado por defecto
+                PARA QUÉ: Activar o desactivar el producto
+                value="true": Valor cuando está marcado
+                checked: Marcado por defecto
+                NOTA: Productos inactivos no aparecen en selecciones
+            -->
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" name="activo" value="true" checked>
                 <label class="form-check-label">Activo</label>
@@ -76,55 +249,117 @@
     </div>
 {% endblock %}
 
+<!-- ========================================== -->
+<!-- BLOQUE DE SCRIPTS JAVASCRIPT               -->
+<!-- ========================================== -->
+
 {% block scripts %}
-{{ super() }}
+{{ super() }}  <!-- Mantiene los scripts de la plantilla base -->
 <script>
-    function renderizarTabla(data) {
-        const tbody = document.getElementById('tableBody');
-        if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No hay productos</td></tr>';
-            return;
-        }
+// ========================================================
+// 1. FUNCIÓN PARA RENDERIZAR LA TABLA
+// ========================================================
+// QUÉ: Esta función recibe datos de la API y los convierte
+//      en filas HTML para mostrarlos en la tabla
+// PARA QUÉ: Visualizar todos los productos registrados
+// ========================================================
+
+function renderizarTabla(data) {
+    // Obtener el cuerpo de la tabla donde insertaremos los datos
+    const tbody = document.getElementById('tableBody');
+    
+    // Si no hay datos o el arreglo está vacío, mostrar mensaje
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No hay productos</td></tr>';
+        return; // Salimos de la función
+    }
+    
+    // Convertir cada elemento del arreglo en una fila HTML
+    tbody.innerHTML = data.map(item => {
+        // ===== CLASE DE ESTADO =====
+        const estadoClass = item.activo ? 'bg-success' : 'bg-danger';
         
-        tbody.innerHTML = data.map(item => `
-            <tr>
-                <td><strong>${item.nombre || 'N/A'}</strong></td>
-                <td><span class="badge bg-info">${item.categoria || 'N/A'}</span></td>
-                <td><code>${item.codigo || 'N/A'}</code></td>
-                <td>$${item.costo?.toFixed(2) || '0.00'}</td>
-                <td>$${item.precio?.toFixed(2) || '0.00'}</td>
-                <td>${item.stock_actual || 0}</td>
-                <td>${item.demanda_promedio_mensual || 0}</td>
-                <td>
-                    <span class="badge ${item.activo ? 'bg-success' : 'bg-danger'}">
-                        ${item.activo ? 'Activo' : 'Inactivo'}
-                    </span>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('${item._id}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('${item._id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    }
+        // ===== CONSTRUCCIÓN DE LA FILA =====
+        return `
+        <tr>
+            <!-- Columna 1: Nombre (en negrita) -->
+            <td><strong>${item.nombre || 'N/A'}</strong></td>
+            
+            <!-- Columna 2: Categoría con badge azul -->
+            <td><span class="badge bg-info">${item.categoria || 'N/A'}</span></td>
+            
+            <!-- Columna 3: Código con fuente monoespaciada -->
+            <td><code>${item.codigo || 'N/A'}</code></td>
+            <!-- 
+                <code>: Etiqueta HTML para mostrar código/formato
+                Hace que el texto se vea con fuente monoespaciada
+            -->
+            
+            <!-- Columna 4: Costo con formato moneda -->
+            <td>$${item.costo?.toFixed(2) || '0.00'}</td>
+            
+            <!-- Columna 5: Precio con formato moneda -->
+            <td>$${item.precio?.toFixed(2) || '0.00'}</td>
+            
+            <!-- Columna 6: Stock Actual -->
+            <td>${item.stock_actual || 0}</td>
+            
+            <!-- Columna 7: Demanda Mensual -->
+            <td>${item.demanda_promedio_mensual || 0}</td>
+            
+            <!-- Columna 8: Estado Activo/Inactivo -->
+            <td>
+                <span class="badge ${estadoClass}">
+                    ${item.activo ? 'Activo' : 'Inactivo'}
+                </span>
+            </td>
+            
+            <!-- Columna 9: Botones de acción -->
+            <td>
+                <!-- Botón Editar -->
+                <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('${item._id}')">
+                    <i class="fas fa-edit"></i> <!-- Icono de lápiz -->
+                </button>
+                <!-- Botón Eliminar -->
+                <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('${item._id}')">
+                    <i class="fas fa-trash"></i> <!-- Icono de papelera -->
+                </button>
+            </td>
+        </tr>
+    `}).join(''); // join('') convierte el arreglo en una sola cadena de texto
+}
 
-    function llenarFormulario(data) {
-        Object.keys(data).forEach(key => {
-            const input = document.querySelector(`[name="${key}"]`);
-            if (input) {
-                if (input.type === 'checkbox') {
-                    input.checked = data[key] === true;
-                } else {
-                    input.value = data[key] || '';
-                }
+// ========================================================
+// 2. FUNCIÓN PARA LLENAR FORMULARIO EN EDICIÓN
+// ========================================================
+// QUÉ: Recibe los datos de un producto y los coloca
+//      en los campos del formulario para editar
+// PARA QUÉ: Cuando el usuario da clic en "Editar",
+//          se cargan los datos existentes en el formulario
+// ========================================================
+
+function llenarFormulario(data) {
+    // Recorrer todas las propiedades del objeto data
+    Object.keys(data).forEach(key => {
+        // Buscar el campo del formulario con ese nombre
+        const input = document.querySelector(`[name="${key}"]`);
+        
+        // Si el campo existe, procedemos a llenarlo
+        if (input) {
+            // ===== CASO 1: Checkbox =====
+            if (input.type === 'checkbox') {
+                // Marcar o desmarcar según el valor
+                input.checked = data[key] === true;
+            } 
+            // ===== CASO 2: Campos de texto/número =====
+            else {
+                // Asignar el valor o vacío si no existe
+                input.value = data[key] || '';
             }
-        });
-    }
+        }
+    });
+}
 
-    console.log('✅ productos.html cargado correctamente');
+
 </script>
 {% endblock %}

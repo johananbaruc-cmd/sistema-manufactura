@@ -1,36 +1,134 @@
 <!-- templates/materia_prima.html -->
+<!-- 
+    ==========================================
+    PLANTILLA: Gestión de Materia Prima
+    ==========================================
+    Este archivo extiende (hereda) de 'crud_base.html'
+    que contiene la estructura base de todas las páginas CRUD.
+    Aquí definimos lo específico del módulo de Materia Prima.
+-->
+
 {% extends "crud_base.html" %}
+<!-- 
+    QUÉ: Hereda de la plantilla base CRUD
+    PARA QUÉ: Reutilizar estructura común de formularios, tablas y modales
+-->
+
+<!-- ========================================== -->
+<!-- BLOQUES DE TÍTULO Y CONFIGURACIÓN          -->
+<!-- ========================================== -->
 
 {% block title %}Materia Prima{% endblock %}
+<!-- 
+    QUÉ: Título de la pestaña del navegador
+    PARA QUÉ: Identificar la página como "Materia Prima"
+-->
+
 {% block page_title %}Gestión de Materia Prima{% endblock %}
+<!-- 
+    QUÉ: Título principal que se muestra en el encabezado
+    PARA QUÉ: Dar contexto al usuario sobre el módulo
+-->
+
 {% block api_url %}/api/materia_prima{% endblock %}
+<!-- 
+    QUÉ: URL del endpoint API para materia prima
+    PARA QUÉ: La plantilla base usa esta URL para:
+             - GET: Obtener todos los materiales
+             - POST: Crear nuevo material
+             - PUT: Actualizar material existente
+             - DELETE: Eliminar material
+-->
+
+<!-- ========================================== -->
+<!-- ENCABEZADOS DE LA TABLA                    -->
+<!-- ========================================== -->
 
 {% block table_headers %}
-    <th>Nombre</th>
-    <th>Código</th>
-    <th>Proveedor</th>
-    <th>Costo Unitario</th>
-    <th>Unidad</th>
-    <th>Stock Actual</th>
-    <th>Stock Mínimo</th>
-    <th>Estado</th>
+    <!-- 
+        QUÉ: Define las columnas que tendrá la tabla
+        PARA QUÉ: La plantilla base usa estos encabezados
+                 para construir la tabla dinámicamente
+    -->
+    <th>Nombre</th>           <!-- Nombre del material -->
+    <th>Código</th>           <!-- Código identificador único -->
+    <th>Proveedor</th>        <!-- Proveedor del material -->
+    <th>Costo Unitario</th>   <!-- Precio por unidad -->
+    <th>Unidad</th>           <!-- Unidad de medida (kg, L, ud, etc.) -->
+    <th>Stock Actual</th>     <!-- Cantidad disponible en inventario -->
+    <th>Stock Mínimo</th>     <!-- Nivel mínimo de inventario permitido -->
+    <th>Estado</th>           <!-- Activo/Inactivo -->
 {% endblock %}
 
+<!-- ========================================== -->
+<!-- CAMPOS DEL FORMULARIO                      -->
+<!-- ========================================== -->
+
 {% block form_fields %}
+    <!-- 
+        QUÉ: Define todos los campos del formulario de creación/edición
+        PARA QUÉ: La plantilla base usa estos campos para construir
+                 el formulario modal de manera dinámica
+    -->
+    
     <div class="row">
+        <!-- ======================================== -->
+        <!-- PRIMERA FILA: Nombre y Código            -->
+        <!-- ======================================== -->
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Nombre
+                QUÉ: Campo de texto
+                PARA QUÉ: Identificar el material de manera clara
+                required: Campo obligatorio
+                Ejemplo: "Acero Inoxidable 304", "Plástico ABS"
+            -->
             <label class="form-label">Nombre</label>
             <input type="text" class="form-control" name="nombre" required>
         </div>
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Código
+                QUÉ: Campo de texto con placeholder
+                PARA QUÉ: Identificador único del material (SKU)
+                required: Campo obligatorio
+                placeholder: Formato sugerido "MP-00000"
+                NOTA: Permite búsqueda y clasificación rápida
+            -->
             <label class="form-label">Código</label>
             <input type="text" class="form-control" name="codigo" required placeholder="MP-00000">
         </div>
+        
+        <!-- ======================================== -->
+        <!-- SEGUNDA FILA: Descripción                -->
+        <!-- ======================================== -->
+        
         <div class="col-md-12 mb-3">
+            <!-- 
+                CAMPO: Descripción
+                QUÉ: Área de texto multilínea
+                PARA QUÉ: Detalles adicionales del material
+                rows="2": Altura inicial de 2 líneas
+                NOTA: No es obligatorio, pero útil para especificaciones
+            -->
             <label class="form-label">Descripción</label>
             <textarea class="form-control" name="descripcion" rows="2"></textarea>
         </div>
+        
+        <!-- ======================================== -->
+        <!-- TERCERA FILA: Proveedor y Unidad         -->
+        <!-- ======================================== -->
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Proveedor
+                QUÉ: Selector con 6 proveedores predefinidos
+                PARA QUÉ: Registrar quién suministra el material
+                required: Campo obligatorio
+                NOTA: Puede expandirse o cambiar según necesidades
+            -->
             <label class="form-label">Proveedor</label>
             <select class="form-select" name="proveedor" required>
                 <option value="Proveedor A">Proveedor A</option>
@@ -41,37 +139,112 @@
                 <option value="Proveedor F">Proveedor F</option>
             </select>
         </div>
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Unidad de Medida
+                QUÉ: Selector con 5 unidades predefinidas
+                PARA QUÉ: Especificar cómo se mide el material
+                required: Campo obligatorio
+                kg: Kilogramos (peso)
+                litros: Volumen
+                unidades: Cantidad individual
+                metros: Longitud
+                toneladas: Peso a gran escala
+            -->
             <label class="form-label">Unidad de Medida</label>
             <select class="form-select" name="unidad_medida" required>
-                <option value="kg">Kilogramos (kg)</option>
-                <option value="litros">Litros (L)</option>
-                <option value="unidades">Unidades (ud)</option>
-                <option value="metros">Metros (m)</option>
-                <option value="toneladas">Toneladas (ton)</option>
+                <option value="kg">Kilogramos (kg)</option>        <!-- Peso -->
+                <option value="litros">Litros (L)</option>        <!-- Volumen -->
+                <option value="unidades">Unidades (ud)</option>   <!-- Cantidad -->
+                <option value="metros">Metros (m)</option>        <!-- Longitud -->
+                <option value="toneladas">Toneladas (ton)</option> <!-- Peso grande -->
             </select>
         </div>
+        
+        <!-- ======================================== -->
+        <!-- CUARTA FILA: Costo, Stock y Mínimo      -->
+        <!-- ======================================== -->
+        
         <div class="col-md-4 mb-3">
+            <!-- 
+                CAMPO: Costo Unitario
+                QUÉ: Input numérico con decimales
+                PARA QUÉ: Registrar el precio por unidad del material
+                step="0.01": Permite centésimas (moneda)
+                required: Campo obligatorio
+            -->
             <label class="form-label">Costo Unitario ($)</label>
             <input type="number" step="0.01" class="form-control" name="costo_unitario" required>
         </div>
+        
         <div class="col-md-4 mb-3">
+            <!-- 
+                CAMPO: Stock Actual
+                QUÉ: Input numérico
+                PARA QUÉ: Registrar la cantidad disponible en inventario
+                value="50": Valor por defecto
+                required: Campo obligatorio
+                NOTA: Se actualiza con cada compra o uso
+            -->
             <label class="form-label">Stock Actual</label>
             <input type="number" class="form-control" name="stock_actual" value="50" required>
         </div>
+        
         <div class="col-md-4 mb-3">
+            <!-- 
+                CAMPO: Stock Mínimo
+                QUÉ: Input numérico
+                PARA QUÉ: Definir el nivel mínimo de inventario
+                value="10": Valor por defecto
+                required: Campo obligatorio
+                NOTA: Sirve para alertar cuando hay que reabastecer
+            -->
             <label class="form-label">Stock Mínimo</label>
             <input type="number" class="form-control" name="stock_minimo" value="10" required>
         </div>
+        
+        <!-- ======================================== -->
+        <!-- QUINTA FILA: Tiempo de Entrega y Compra  -->
+        <!-- ======================================== -->
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Tiempo de Entrega
+                QUÉ: Input numérico
+                PARA QUÉ: Días que tarda el proveedor en entregar
+                value="5": Valor por defecto (5 días)
+                NOTA: Útil para planificar reabastecimientos
+            -->
             <label class="form-label">Tiempo de Entrega (días)</label>
             <input type="number" class="form-control" name="tiempo_entrega_dias" value="5">
         </div>
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Fecha Última Compra
+                QUÉ: Input de fecha y hora
+                PARA QUÉ: Registrar cuándo se compró por última vez
+                type="datetime-local": Muestra selector de fecha y hora
+                NOTA: Ayuda a calcular frecuencia de compras
+            -->
             <label class="form-label">Fecha Última Compra</label>
             <input type="datetime-local" class="form-control" name="fecha_ultima_compra">
         </div>
+        
+        <!-- ======================================== -->
+        <!-- SEXTA FILA: Estado Activo/Inactivo       -->
+        <!-- ======================================== -->
+        
         <div class="col-md-12 mb-3">
+            <!-- 
+                CAMPO: Activo
+                QUÉ: Checkbox marcado por defecto
+                PARA QUÉ: Activar o desactivar el material
+                value="true": Valor cuando está marcado
+                checked: Marcado por defecto
+                NOTA: Materiales inactivos no aparecen en selecciones
+            -->
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" name="activo" value="true" checked>
                 <label class="form-check-label">Activo</label>
@@ -80,72 +253,146 @@
     </div>
 {% endblock %}
 
+<!-- ========================================== -->
+<!-- BLOQUE DE SCRIPTS JAVASCRIPT               -->
+<!-- ========================================== -->
+
 {% block scripts %}
-{{ super() }}
+{{ super() }}  <!-- Mantiene los scripts de la plantilla base -->
 <script>
-    function renderizarTabla(data) {
-        const tbody = document.getElementById('tableBody');
-        if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No hay registros de materia prima</td></tr>';
-            return;
-        }
+// ========================================================
+// 1. FUNCIÓN PARA RENDERIZAR LA TABLA
+// ========================================================
+// QUÉ: Esta función recibe datos de la API y los convierte
+//      en filas HTML para mostrarlos en la tabla
+// PARA QUÉ: Visualizar todos los materiales registrados
+// ========================================================
+
+function renderizarTabla(data) {
+    // Obtener el cuerpo de la tabla donde insertaremos los datos
+    const tbody = document.getElementById('tableBody');
+    
+    // Si no hay datos o el arreglo está vacío, mostrar mensaje
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No hay registros de materia prima</td></tr>';
+        return; // Salimos de la función
+    }
+    
+    // Convertir cada elemento del arreglo en una fila HTML
+    tbody.innerHTML = data.map(item => {
+        // ===== CLASE DE STOCK =====
+        // Si el stock actual es menor al mínimo, alerta roja
+        const stockClass = item.stock_actual < item.stock_minimo ? 'bg-danger' : 'bg-success';
         
-        tbody.innerHTML = data.map(item => `
-            <tr>
-                <td><strong>${item.nombre || 'N/A'}</strong></td>
-                <td><code>${item.codigo || 'N/A'}</code></td>
-                <td>${item.proveedor || 'N/A'}</td>
-                <td>$${item.costo_unitario?.toFixed(2) || '0.00'}</td>
-                <td><span class="badge bg-secondary">${item.unidad_medida || 'N/A'}</span></td>
-                <td>
-                    <span class="badge ${item.stock_actual < item.stock_minimo ? 'bg-danger' : 'bg-success'}">
-                        ${item.stock_actual || 0}
-                    </span>
-                </td>
-                <td>${item.stock_minimo || 0}</td>
-                <td>
-                    <span class="badge ${item.activo ? 'bg-success' : 'bg-danger'}">
-                        ${item.activo ? 'Activo' : 'Inactivo'}
-                    </span>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('${item._id}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('${item._id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    }
+        // ===== CLASE DE ESTADO =====
+        const estadoClass = item.activo ? 'bg-success' : 'bg-danger';
+        
+        // ===== CONSTRUCCIÓN DE LA FILA =====
+        return `
+        <tr>
+            <!-- Columna 1: Nombre (en negrita) -->
+            <td><strong>${item.nombre || 'N/A'}</strong></td>
+            
+            <!-- Columna 2: Código (con fuente monoespaciada) -->
+            <td><code>${item.codigo || 'N/A'}</code></td>
+            <!-- 
+                <code>: Etiqueta HTML para mostrar código/formato
+                Hace que el texto se vea con fuente monoespaciada
+            -->
+            
+            <!-- Columna 3: Proveedor -->
+            <td>${item.proveedor || 'N/A'}</td>
+            
+            <!-- Columna 4: Costo Unitario con formato moneda -->
+            <td>$${item.costo_unitario?.toFixed(2) || '0.00'}</td>
+            
+            <!-- Columna 5: Unidad de medida con badge -->
+            <td><span class="badge bg-secondary">${item.unidad_medida || 'N/A'}</span></td>
+            
+            <!-- Columna 6: Stock Actual con badge de color -->
+            <td>
+                <span class="badge ${stockClass}">
+                    ${item.stock_actual || 0}
+                </span>
+            </td>
+            
+            <!-- Columna 7: Stock Mínimo -->
+            <td>${item.stock_minimo || 0}</td>
+            
+            <!-- Columna 8: Estado Activo/Inactivo -->
+            <td>
+                <span class="badge ${estadoClass}">
+                    ${item.activo ? 'Activo' : 'Inactivo'}
+                </span>
+            </td>
+            
+            <!-- Columna 9: Botones de acción -->
+            <td>
+                <!-- Botón Editar -->
+                <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('${item._id}')">
+                    <i class="fas fa-edit"></i> <!-- Icono de lápiz -->
+                </button>
+                <!-- Botón Eliminar -->
+                <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('${item._id}')">
+                    <i class="fas fa-trash"></i> <!-- Icono de papelera -->
+                </button>
+            </td>
+        </tr>
+    `}).join(''); // join('') convierte el arreglo en una sola cadena de texto
+}
 
-    function llenarFormulario(data) {
-        Object.keys(data).forEach(key => {
-            const input = document.querySelector(`[name="${key}"]`);
-            if (input) {
-                if (key === 'fecha_ultima_compra' && data[key]) {
-                    const date = new Date(data[key]);
-                    if (!isNaN(date.getTime())) {
-                        input.value = date.toISOString().slice(0, 16);
-                    }
-                } else if (input.type === 'checkbox') {
-                    input.checked = data[key] === true;
-                } else if (input.type === 'select-one') {
-                    const options = input.options;
-                    for (let i = 0; i < options.length; i++) {
-                        if (options[i].value == data[key]) {
-                            input.selectedIndex = i;
-                            break;
-                        }
-                    }
-                } else {
-                    input.value = data[key] || '';
+// ========================================================
+// 2. FUNCIÓN PARA LLENAR FORMULARIO EN EDICIÓN
+// ========================================================
+// QUÉ: Recibe los datos de un material y los coloca
+//      en los campos del formulario para editar
+// PARA QUÉ: Cuando el usuario da clic en "Editar",
+//          se cargan los datos existentes en el formulario
+// ========================================================
+
+function llenarFormulario(data) {
+    // Recorrer todas las propiedades del objeto data
+    Object.keys(data).forEach(key => {
+        // Buscar el campo del formulario con ese nombre
+        const input = document.querySelector(`[name="${key}"]`);
+        
+        // Si el campo existe, procedemos a llenarlo
+        if (input) {
+            // ===== CASO 1: Fecha de última compra =====
+            if (key === 'fecha_ultima_compra' && data[key]) {
+                // Convertir fecha ISO a formato local
+                const date = new Date(data[key]);
+                // Verificar que la fecha sea válida
+                if (!isNaN(date.getTime())) {
+                    // Formato para input datetime-local: YYYY-MM-DDThh:mm
+                    input.value = date.toISOString().slice(0, 16);
                 }
+            } 
+            // ===== CASO 2: Checkbox =====
+            else if (input.type === 'checkbox') {
+                // Marcar o desmarcar según el valor
+                input.checked = data[key] === true;
+            } 
+            // ===== CASO 3: Selector desplegable =====
+            else if (input.type === 'select-one') {
+                // Buscar la opción que tenga el mismo valor
+                const options = input.options;
+                for (let i = 0; i < options.length; i++) {
+                    // Comparar con == porque pueden ser números o strings
+                    if (options[i].value == data[key]) {
+                        input.selectedIndex = i; // Seleccionar esa opción
+                        break;
+                    }
+                }
+            } 
+            // ===== CASO 4: Campos de texto/número =====
+            else {
+                input.value = data[key] || ''; // Si no hay valor, dejar vacío
             }
-        });
-    }
+        }
+    });
+}
 
-    console.log('✅ materia_prima.html cargado correctamente');
+
 </script>
 {% endblock %}

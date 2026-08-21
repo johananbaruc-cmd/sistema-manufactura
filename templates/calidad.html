@@ -1,180 +1,407 @@
 <!-- templates/calidad.html -->
+<!-- 
+    ==========================================
+    PLANTILLA: Control de Calidad
+    ==========================================
+    Este archivo extiende (hereda) de 'crud_base.html' 
+    que contiene la estructura base de todas las páginas CRUD.
+    Aquí solo definimos lo específico del módulo Calidad.
+-->
+
 {% extends "crud_base.html" %}
 
+<!-- ========================================== -->
+<!-- BLOQUES DE TÍTULO Y CONFIGURACIÓN          -->
+<!-- ========================================== -->
+
 {% block title %}Calidad{% endblock %}
+<!-- 
+    QUÉ: Define el título que aparece en la pestaña del navegador
+    PARA QUÉ: Identificar la página en el navegador
+-->
+
 {% block page_title %}Control de Calidad{% endblock %}
+<!-- 
+    QUÉ: Título principal que se muestra en el encabezado de la página
+    PARA QUÉ: Dar contexto al usuario sobre qué módulo está viendo
+-->
+
 {% block api_url %}/api/calidad{% endblock %}
+<!-- 
+    QUÉ: URL del endpoint API que usará este módulo
+    PARA QUÉ: La plantilla base usa esta URL para hacer peticiones CRUD
+             (GET, POST, PUT, DELETE) a este recurso específico
+-->
+
+<!-- ========================================== -->
+<!-- ENCABEZADOS DE LA TABLA                    -->
+<!-- ========================================== -->
 
 {% block table_headers %}
-    <th>Producto</th>
-    <th>Fecha</th>
-    <th>Tipo Defecto</th>
-    <th>Severidad</th>
-    <th>Inspector</th>
-    <th>Acción</th>
-    <th>Costo Reparación</th>
+    <!-- 
+        QUÉ: Define las columnas que tendrá la tabla
+        PARA QUÉ: La plantilla base itera sobre estos encabezados
+                 para construir la tabla dinámicamente
+    -->
+    <th>Producto</th>        <!-- Nombre del producto inspeccionado -->
+    <th>Fecha</th>           <!-- Fecha y hora del control de calidad -->
+    <th>Tipo Defecto</th>    <!-- Clasificación del defecto encontrado -->
+    <th>Severidad</th>       <!-- Nivel de gravedad (Bajo/Medio/Alto/Crítico) -->
+    <th>Inspector</th>       <!-- Persona que realizó la inspección -->
+    <th>Acción</th>          <!-- Acción tomada (Reprocesar/Rechazar/Reparar/etc) -->
+    <th>Costo Reparación</th><!-- Costo económico de la reparación -->
 {% endblock %}
 
+<!-- ========================================== -->
+<!-- CAMPOS DEL FORMULARIO                      -->
+<!-- ========================================== -->
+
 {% block form_fields %}
+    <!-- 
+        QUÉ: Define todos los campos del formulario de creación/edición
+        PARA QUÉ: La plantilla base usa estos campos para construir
+                 el formulario modal de manera dinámica
+    -->
+    
     <div class="row">
+        <!-- ======================================== -->
+        <!-- PRIMERA FILA: Selectores de relaciones    -->
+        <!-- ======================================== -->
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Producción
+                QUÉ: Selector desplegable para elegir la producción asociada
+                PARA QUÉ: Relaciona este control de calidad con un 
+                         registro específico de producción
+                name="produccion_id": Nombre que tendrá en el formulario
+                id="produccionSelect": ID para manipular con JavaScript
+                required: Campo obligatorio
+            -->
             <label class="form-label">Producción</label>
             <select class="form-select" name="produccion_id" id="produccionSelect" required>
                 <option value="">Seleccionar...</option>
+                <!-- Las opciones se llenan dinámicamente con JavaScript -->
             </select>
         </div>
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Producto
+                QUÉ: Selector para elegir el producto inspeccionado
+                PARA QUÉ: Identificar qué producto fue evaluado
+                NOTA: Puede ser el mismo que la producción o uno diferente
+            -->
             <label class="form-label">Producto</label>
             <select class="form-select" name="producto_id" id="productoSelect" required>
                 <option value="">Seleccionar...</option>
+                <!-- Las opciones se llenan dinámicamente con JavaScript -->
             </select>
         </div>
+        
+        <!-- ======================================== -->
+        <!-- SEGUNDA FILA: Fecha y tipo de defecto    -->
+        <!-- ======================================== -->
+        
         <div class="col-md-4 mb-3">
+            <!-- 
+                CAMPO: Fecha
+                QUÉ: Input de fecha y hora
+                PARA QUÉ: Registrar cuándo se realizó el control
+                type="datetime-local": Muestra selector de fecha y hora
+            -->
             <label class="form-label">Fecha</label>
             <input type="datetime-local" class="form-control" name="fecha" required>
         </div>
+        
         <div class="col-md-4 mb-3">
+            <!-- 
+                CAMPO: Tipo de Defecto
+                QUÉ: Selector con tipos predefinidos de defectos
+                PARA QUÉ: Clasificar el tipo de problema encontrado
+                Opciones: Rasguño, Abolladura, Fisura, etc.
+            -->
             <label class="form-label">Tipo de Defecto</label>
             <select class="form-select" name="tipo_defecto" required>
-                <option value="Rasguño">Rasguño</option>
-                <option value="Abolladura">Abolladura</option>
-                <option value="Fisura">Fisura</option>
-                <option value="Desalineación">Desalineación</option>
-                <option value="Acabado defectuoso">Acabado defectuoso</option>
-                <option value="Dimensión incorrecta">Dimensión incorrecta</option>
-                <option value="Material defectuoso">Material defectuoso</option>
+                <option value="Rasguño">Rasguño</option>           <!-- Rayadura superficial -->
+                <option value="Abolladura">Abolladura</option>     <!-- Golpe o deformación -->
+                <option value="Fisura">Fisura</option>            <!-- Grietas o fracturas -->
+                <option value="Desalineación">Desalineación</option> <!-- Piezas mal alineadas -->
+                <option value="Acabado defectuoso">Acabado defectuoso</option> <!-- Mal terminado -->
+                <option value="Dimensión incorrecta">Dimensión incorrecta</option> <!-- Medidas erróneas -->
+                <option value="Material defectuoso">Material defectuoso</option> <!-- Material en mal estado -->
             </select>
         </div>
+        
         <div class="col-md-4 mb-3">
+            <!-- 
+                CAMPO: Severidad
+                QUÉ: Nivel de gravedad del defecto
+                PARA QUÉ: Priorizar la atención de los defectos
+                Bajo: Problema menor, no afecta funcionalidad
+                Medio: Afecta parcialmente pero se puede usar
+                Alto: Afecta significativamente el funcionamiento
+                Crítico: Producto inservible o peligroso
+            -->
             <label class="form-label">Severidad</label>
             <select class="form-select" name="severidad" required>
-                <option value="Bajo">Bajo</option>
-                <option value="Medio">Medio</option>
-                <option value="Alto">Alto</option>
-                <option value="Crítico">Crítico</option>
+                <option value="Bajo">Bajo</option>      <!-- Defecto menor -->
+                <option value="Medio">Medio</option>    <!-- Defecto moderado -->
+                <option value="Alto">Alto</option>      <!-- Defecto grave -->
+                <option value="Crítico">Crítico</option> <!-- Defecto crítico -->
             </select>
         </div>
+        
+        <!-- ======================================== -->
+        <!-- TERCERA FILA: Inspector y acción         -->
+        <!-- ======================================== -->
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Inspector
+                QUÉ: Campo de texto libre
+                PARA QUÉ: Registrar quién realizó la inspección
+                name="inspector": Identificador del campo
+                required: Campo obligatorio
+            -->
             <label class="form-label">Inspector</label>
             <input type="text" class="form-control" name="inspector" required>
         </div>
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Acción Tomada
+                QUÉ: Selector con acciones predefinidas
+                PARA QUÉ: Decidir qué hacer con el producto defectuoso
+                Reprocesar: Volver a procesar el producto
+                Rechazar: Descartar completamente
+                Reparar: Arreglar el defecto
+                Aceptar con condición: Aceptar con restricciones
+                Ninguna: No tomar acción (defecto muy menor)
+            -->
             <label class="form-label">Acción Tomada</label>
             <select class="form-select" name="accion_tomada" required>
-                <option value="Reprocesar">Reprocesar</option>
-                <option value="Rechazar">Rechazar</option>
-                <option value="Reparar">Reparar</option>
-                <option value="Aceptar con condición">Aceptar con condición</option>
-                <option value="Ninguna">Ninguna</option>
+                <option value="Reprocesar">Reprocesar</option>           <!-- Procesar nuevamente -->
+                <option value="Rechazar">Rechazar</option>               <!-- Descartar producto -->
+                <option value="Reparar">Reparar</option>                 <!-- Arreglar defecto -->
+                <option value="Aceptar con condición">Aceptar con condición</option> <!-- Aceptar con limitaciones -->
+                <option value="Ninguna">Ninguna</option>                 <!-- No hacer nada -->
             </select>
         </div>
+        
+        <!-- ======================================== -->
+        <!-- CUARTA FILA: Costo y descripción         -->
+        <!-- ======================================== -->
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Costo Reparación
+                QUÉ: Input numérico con decimales
+                PARA QUÉ: Calcular el costo económico de reparar el defecto
+                step="0.01": Permite centésimas (moneda)
+                value="0": Valor por defecto cero
+            -->
             <label class="form-label">Costo Reparación</label>
             <input type="number" step="0.01" class="form-control" name="costo_reparacion" value="0">
         </div>
+        
         <div class="col-md-12 mb-3">
+            <!-- 
+                CAMPO: Descripción
+                QUÉ: Área de texto multilínea
+                PARA QUÉ: Añadir detalles adicionales o notas del inspector
+                rows="2": Altura inicial de 2 líneas
+            -->
             <label class="form-label">Descripción</label>
             <textarea class="form-control" name="descripcion" rows="2"></textarea>
         </div>
     </div>
 {% endblock %}
 
+<!-- ========================================== -->
+<!-- BLOQUE DE SCRIPTS JAVASCRIPT               -->
+<!-- ========================================== -->
+
 {% block scripts %}
-{{ super() }}
+{{ super() }}  <!-- Mantiene los scripts de la plantilla base -->
 <script>
-    // ==================== RENDERIZAR TABLA ====================
-    function renderizarTabla(data) {
-        const tbody = document.getElementById('tableBody');
-        if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay registros de calidad</td></tr>';
-            return;
-        }
+// ========================================================
+// 1. FUNCIÓN PARA RENDERIZAR LA TABLA
+// ========================================================
+// QUÉ: Esta función recibe datos de la API y los convierte
+//      en filas HTML para mostrarlos en la tabla
+// PARA QUÉ: Visualizar todos los registros de calidad
+// ========================================================
+
+function renderizarTabla(data) {
+    // Obtener el cuerpo de la tabla donde insertaremos los datos
+    const tbody = document.getElementById('tableBody');
+    
+    // Si no hay datos o el arreglo está vacío, mostrar mensaje
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay registros de calidad</td></tr>';
+        return; // Salimos de la función
+    }
+    
+    // Convertir cada elemento del arreglo en una fila HTML
+    tbody.innerHTML = data.map(item => {
+        // ===== FORMATO DE FECHA =====
+        // Convertir la fecha ISO a formato local (español)
+        const fecha = item.fecha ? new Date(item.fecha).toLocaleString('es-ES') : 'N/A';
         
-        tbody.innerHTML = data.map(item => {
-            const fecha = item.fecha ? new Date(item.fecha).toLocaleString('es-ES') : 'N/A';
-            const severidadClass = item.severidad === 'Crítico' ? 'bg-danger' : 
-                                   item.severidad === 'Alto' ? 'bg-warning' : 
-                                   item.severidad === 'Medio' ? 'bg-info' : 'bg-secondary';
+        // ===== CLASE DE SEVERIDAD (COLORES) =====
+        // Asignar clase Bootstrap según el nivel de severidad
+        // Esto dará un color de fondo diferente para cada nivel
+        const severidadClass = item.severidad === 'Crítico' ? 'bg-danger' :    // Rojo para crítico
+                               item.severidad === 'Alto' ? 'bg-warning' :      // Amarillo para alto
+                               item.severidad === 'Medio' ? 'bg-info' :        // Azul para medio
+                               'bg-secondary';                                  // Gris para bajo
+        
+        // ===== CONSTRUCCIÓN DE LA FILA =====
+        // Retornamos una fila con todas las celdas
+        return `
+        <tr>
+            <!-- Columna 1: Producto (en negrita) -->
+            <td><strong>${item.producto_nombre || 'N/A'}</strong></td>
             
-            return `
-            <tr>
-                <td><strong>${item.producto_nombre || 'N/A'}</strong></td>
-                <td><small>${fecha}</small></td>
-                <td><span class="badge bg-warning">${item.tipo_defecto || 'N/A'}</span></td>
-                <td>
-                    <span class="badge ${severidadClass}">
-                        ${item.severidad || 'N/A'}
-                    </span>
-                </td>
-                <td>${item.inspector || 'N/A'}</td>
-                <td><small>${item.accion_tomada || 'N/A'}</small></td>
-                <td>$${item.costo_reparacion?.toFixed(2) || '0.00'}</td>
-                <td>
-                    <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('${item._id}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('${item._id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `}).join('');
-    }
-
-    // ==================== LLENAR SELECTS ====================
-    async function llenarSelects() {
-        try {
-            // Cargar productos
-            const prodResponse = await fetch('/api/productos');
-            if (!prodResponse.ok) throw new Error('Error cargando productos');
-            const productos = await prodResponse.json();
-            const prodSelect = document.getElementById('productoSelect');
-            prodSelect.innerHTML = '<option value="">Seleccionar...</option>' + 
-                productos.map(p => `<option value="${p._id}">${p.nombre}</option>`).join('');
+            <!-- Columna 2: Fecha en formato pequeño -->
+            <td><small>${fecha}</small></td>
             
-            // Cargar producciones
-            const prodResponse2 = await fetch('/api/produccion');
-            if (!prodResponse2.ok) throw new Error('Error cargando producciones');
-            const producciones = await prodResponse2.json();
-            const prodSelect2 = document.getElementById('produccionSelect');
-            prodSelect2.innerHTML = '<option value="">Seleccionar...</option>' + 
-                producciones.map(p => {
-                    const fecha = p.fecha ? new Date(p.fecha).toLocaleDateString('es-ES') : 'Sin fecha';
-                    const nombre = p.producto_nombre || 'Producción';
-                    return `<option value="${p._id}">${nombre} - ${fecha}</option>`;
-                }).join('');
-        } catch (error) {
-            console.error('Error cargando selects:', error);
-        }
-    }
+            <!-- Columna 3: Tipo de defecto con badge amarillo -->
+            <td><span class="badge bg-warning">${item.tipo_defecto || 'N/A'}</span></td>
+            
+            <!-- Columna 4: Severidad con badge de color dinámico -->
+            <td>
+                <span class="badge ${severidadClass}">
+                    ${item.severidad || 'N/A'}
+                </span>
+            </td>
+            
+            <!-- Columna 5: Inspector -->
+            <td>${item.inspector || 'N/A'}</td>
+            
+            <!-- Columna 6: Acción tomada -->
+            <td><small>${item.accion_tomada || 'N/A'}</small></td>
+            
+            <!-- Columna 7: Costo de reparación con formato moneda -->
+            <td>$${item.costo_reparacion?.toFixed(2) || '0.00'}</td>
+            
+            <!-- Columna 8: Botones de acción -->
+            <td>
+                <!-- Botón Editar -->
+                <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('${item._id}')">
+                    <i class="fas fa-edit"></i> <!-- Icono de lápiz -->
+                </button>
+                <!-- Botón Eliminar -->
+                <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('${item._id}')">
+                    <i class="fas fa-trash"></i> <!-- Icono de papelera -->
+                </button>
+            </td>
+        </tr>
+    `}).join(''); // join('') convierte el arreglo en una sola cadena de texto
+}
 
-    // ==================== LLENAR FORMULARIO ====================
-    function llenarFormulario(data) {
-        Object.keys(data).forEach(key => {
-            const input = document.querySelector(`[name="${key}"]`);
-            if (input) {
-                if (key === 'fecha' && data[key]) {
-                    const date = new Date(data[key]);
-                    if (!isNaN(date.getTime())) {
-                        input.value = date.toISOString().slice(0, 16);
-                    }
-                } else if (input.type === 'select-one') {
-                    const options = input.options;
-                    for (let i = 0; i < options.length; i++) {
-                        if (options[i].value == data[key]) {
-                            input.selectedIndex = i;
-                            break;
-                        }
-                    }
-                } else if (input.type === 'checkbox') {
-                    input.checked = data[key] === true;
-                } else {
-                    input.value = data[key] || '';
+// ========================================================
+// 2. FUNCIÓN PARA LLENAR SELECTORES DINÁMICOS
+// ========================================================
+// QUÉ: Carga datos desde la API para llenar los combos
+//      de productos y producciones
+// PARA QUÉ: Que el usuario pueda seleccionar de una lista
+//          actualizada en lugar de escribir manualmente
+// ========================================================
+
+async function llenarSelects() {
+    try {
+        // ===== CARGAR PRODUCTOS =====
+        // Hacemos petición GET a la API de productos
+        const prodResponse = await fetch('/api/productos');
+        if (!prodResponse.ok) throw new Error('Error cargando productos');
+        const productos = await prodResponse.json(); // Convertir respuesta a JSON
+        
+        // Obtener el elemento select de productos
+        const prodSelect = document.getElementById('productoSelect');
+        
+        // Construir las opciones: primero la opción por defecto
+        prodSelect.innerHTML = '<option value="">Seleccionar...</option>' + 
+            // Luego una opción por cada producto
+            productos.map(p => `<option value="${p._id}">${p.nombre}</option>`).join('');
+        
+        // ===== CARGAR PRODUCCIONES =====
+        // Hacemos petición GET a la API de producción
+        const prodResponse2 = await fetch('/api/produccion');
+        if (!prodResponse2.ok) throw new Error('Error cargando producciones');
+        const producciones = await prodResponse2.json();
+        
+        // Obtener el elemento select de producciones
+        const prodSelect2 = document.getElementById('produccionSelect');
+        
+        // Construir las opciones: primero la opción por defecto
+        prodSelect2.innerHTML = '<option value="">Seleccionar...</option>' + 
+            producciones.map(p => {
+                // Formatear fecha para mostrar en el combo
+                const fecha = p.fecha ? new Date(p.fecha).toLocaleDateString('es-ES') : 'Sin fecha';
+                // Mostrar nombre del producto y fecha
+                const nombre = p.producto_nombre || 'Producción';
+                return `<option value="${p._id}">${nombre} - ${fecha}</option>`;
+            }).join('');
+            
+    } catch (error) {
+        // En caso de error, mostrar en consola
+        console.error('Error cargando selects:', error);
+    }
+}
+
+// ========================================================
+// 3. FUNCIÓN PARA LLENAR FORMULARIO EN EDICIÓN
+// ========================================================
+// QUÉ: Recibe los datos de un registro y los coloca
+//      en los campos del formulario para editar
+// PARA QUÉ: Cuando el usuario da clic en "Editar", 
+//          se cargan los datos existentes en el formulario
+// ========================================================
+
+function llenarFormulario(data) {
+    // Recorrer todas las propiedades del objeto data
+    Object.keys(data).forEach(key => {
+        // Buscar el campo del formulario con ese nombre
+        const input = document.querySelector(`[name="${key}"]`);
+        
+        // Si el campo existe, procedemos a llenarlo
+        if (input) {
+            // ===== CASO 1: Campo de fecha =====
+            if (key === 'fecha' && data[key]) {
+                // Convertir fecha ISO a formato local
+                const date = new Date(data[key]);
+                // Verificar que la fecha sea válida
+                if (!isNaN(date.getTime())) {
+                    // Formato para input datetime-local: YYYY-MM-DDThh:mm
+                    input.value = date.toISOString().slice(0, 16);
                 }
+            } 
+            // ===== CASO 2: Selector desplegable =====
+            else if (input.type === 'select-one') {
+                // Buscar la opción que tenga el mismo valor
+                const options = input.options;
+                for (let i = 0; i < options.length; i++) {
+                    // Comparar con == porque pueden ser números o strings
+                    if (options[i].value == data[key]) {
+                        input.selectedIndex = i; // Seleccionar esa opción
+                        break;
+                    }
+                }
+            } 
+            // ===== CASO 3: Checkbox =====
+            else if (input.type === 'checkbox') {
+                input.checked = data[key] === true;
+            } 
+            // ===== CASO 4: Campos de texto/número =====
+            else {
+                input.value = data[key] || ''; // Si no hay valor, dejar vacío
             }
-        });
-    }
+        }
+    });
+}
 
-    console.log('✅ calidad.html cargado correctamente');
+
 </script>
 {% endblock %}

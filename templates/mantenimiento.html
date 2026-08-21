@@ -1,152 +1,416 @@
 <!-- templates/mantenimiento.html -->
+<!-- 
+    ==========================================
+    PLANTILLA: Gestión de Mantenimiento
+    ==========================================
+    Este archivo extiende (hereda) de 'crud_base.html'
+    que contiene la estructura base de todas las páginas CRUD.
+    Aquí definimos lo específico del módulo de Mantenimiento.
+-->
+
 {% extends "crud_base.html" %}
+<!-- 
+    QUÉ: Hereda de la plantilla base CRUD
+    PARA QUÉ: Reutilizar estructura común de formularios, tablas y modales
+-->
+
+<!-- ========================================== -->
+<!-- BLOQUES DE TÍTULO Y CONFIGURACIÓN          -->
+<!-- ========================================== -->
 
 {% block title %}Mantenimiento{% endblock %}
+<!-- 
+    QUÉ: Título de la pestaña del navegador
+    PARA QUÉ: Identificar la página como "Mantenimiento"
+-->
+
 {% block page_title %}Gestión de Mantenimiento{% endblock %}
+<!-- 
+    QUÉ: Título principal que se muestra en el encabezado
+    PARA QUÉ: Dar contexto al usuario sobre el módulo
+-->
+
 {% block api_url %}/api/mantenimiento{% endblock %}
+<!-- 
+    QUÉ: URL del endpoint API para mantenimiento
+    PARA QUÉ: La plantilla base usa esta URL para:
+             - GET: Obtener todos los registros
+             - POST: Crear nuevo registro
+             - PUT: Actualizar registro existente
+             - DELETE: Eliminar registro
+-->
+
+<!-- ========================================== -->
+<!-- ENCABEZADOS DE LA TABLA                    -->
+<!-- ========================================== -->
 
 {% block table_headers %}
-    <th>Máquina</th>
-    <th>Tipo</th>
-    <th>Fecha</th>
-    <th>Técnico</th>
-    <th>Descripción</th>
-    <th>Duración</th>
-    <th>Costo</th>
-    <th>Efectividad</th>
+    <!-- 
+        QUÉ: Define las columnas que tendrá la tabla
+        PARA QUÉ: La plantilla base usa estos encabezados
+                 para construir la tabla dinámicamente
+    -->
+    <th>Máquina</th>           <!-- Máquina que recibió mantenimiento -->
+    <th>Tipo</th>              <!-- Tipo de mantenimiento: Preventivo/Correctivo/Predictivo -->
+    <th>Fecha</th>             <!-- Fecha y hora del mantenimiento -->
+    <th>Técnico</th>           <!-- Persona que realizó el mantenimiento -->
+    <th>Descripción</th>       <!-- Breve descripción del trabajo realizado -->
+    <th>Duración</th>          <!-- Tiempo que duró el mantenimiento (horas) -->
+    <th>Costo</th>             <!-- Costo económico del mantenimiento -->
+    <th>Efectividad</th>       <!-- Qué tan efectivo fue el mantenimiento -->
 {% endblock %}
 
+<!-- ========================================== -->
+<!-- CAMPOS DEL FORMULARIO                      -->
+<!-- ========================================== -->
+
 {% block form_fields %}
+    <!-- 
+        QUÉ: Define todos los campos del formulario de creación/edición
+        PARA QUÉ: La plantilla base usa estos campos para construir
+                 el formulario modal de manera dinámica
+    -->
+    
     <div class="row">
+        <!-- ======================================== -->
+        <!-- PRIMERA FILA: Máquina y Tipo             -->
+        <!-- ======================================== -->
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Máquina
+                QUÉ: Selector desplegable para elegir la máquina
+                PARA QUÉ: Asociar el mantenimiento a una máquina específica
+                name="maquina_id": Nombre del campo en el formulario
+                id="maquinaSelect": ID para manipular con JavaScript
+                required: Campo obligatorio
+            -->
             <label class="form-label">Máquina</label>
             <select class="form-select" name="maquina_id" id="maquinaSelect" required>
                 <option value="">Seleccionar...</option>
+                <!-- Las opciones se llenan dinámicamente con JavaScript -->
             </select>
         </div>
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Tipo de Mantenimiento
+                QUÉ: Selector con 3 tipos predefinidos
+                PARA QUÉ: Clasificar el tipo de intervención
+                Preventivo: Mantenimiento programado (prevención)
+                Correctivo: Reparación por falla (corrección)
+                Predictivo: Basado en monitoreo (predicción)
+            -->
             <label class="form-label">Tipo</label>
             <select class="form-select" name="tipo" required>
-                <option value="Preventivo">Preventivo</option>
-                <option value="Correctivo">Correctivo</option>
-                <option value="Predictivo">Predictivo</option>
+                <option value="Preventivo">Preventivo</option>   <!-- Programado, para prevenir fallas -->
+                <option value="Correctivo">Correctivo</option>   <!-- Por falla o avería -->
+                <option value="Predictivo">Predictivo</option>   <!-- Basado en análisis de datos -->
             </select>
         </div>
+        
+        <!-- ======================================== -->
+        <!-- SEGUNDA FILA: Fecha, Técnico y Duración  -->
+        <!-- ======================================== -->
+        
         <div class="col-md-4 mb-3">
+            <!-- 
+                CAMPO: Fecha
+                QUÉ: Input de fecha y hora
+                PARA QUÉ: Registrar cuándo se realizó el mantenimiento
+                type="datetime-local": Muestra selector de fecha y hora
+            -->
             <label class="form-label">Fecha</label>
             <input type="datetime-local" class="form-control" name="fecha" required>
         </div>
+        
         <div class="col-md-4 mb-3">
+            <!-- 
+                CAMPO: Técnico
+                QUÉ: Campo de texto libre
+                PARA QUÉ: Registrar quién realizó el mantenimiento
+                name="tecnico": Identificador del campo
+                required: Campo obligatorio
+            -->
             <label class="form-label">Técnico</label>
             <input type="text" class="form-control" name="tecnico" required>
         </div>
+        
         <div class="col-md-4 mb-3">
+            <!-- 
+                CAMPO: Duración
+                QUÉ: Input numérico con decimales
+                PARA QUÉ: Medir el tiempo invertido en el mantenimiento
+                step="0.1": Permite medias horas (0.5, 1.5, etc.)
+                required: Campo obligatorio
+                NOTA: Las horas se usan para calcular costos y eficiencia
+            -->
             <label class="form-label">Duración (horas)</label>
             <input type="number" step="0.1" class="form-control" name="duracion_horas" required>
         </div>
+        
+        <!-- ======================================== -->
+        <!-- TERCERA FILA: Descripción                -->
+        <!-- ======================================== -->
+        
         <div class="col-md-12 mb-3">
+            <!-- 
+                CAMPO: Descripción
+                QUÉ: Campo de texto corto
+                PARA QUÉ: Resumir el trabajo realizado
+                required: Campo obligatorio
+            -->
             <label class="form-label">Descripción</label>
             <input type="text" class="form-control" name="descripcion" required>
+            <!-- 
+                NOTA: Es un input type="text" (no textarea) para descripciones breves
+                Si se necesita más detalle, usar el campo "Observaciones" abajo
+            -->
         </div>
+        
+        <!-- ======================================== -->
+        <!-- CUARTA FILA: Costo, Piezas y Efectividad -->
+        <!-- ======================================== -->
+        
         <div class="col-md-4 mb-3">
+            <!-- 
+                CAMPO: Costo
+                QUÉ: Input numérico con decimales
+                PARA QUÉ: Registrar el costo económico del mantenimiento
+                step="0.01": Permite centésimas (moneda)
+                value="0": Valor por defecto cero
+            -->
             <label class="form-label">Costo</label>
             <input type="number" step="0.01" class="form-control" name="costo" value="0">
         </div>
+        
         <div class="col-md-4 mb-3">
+            <!-- 
+                CAMPO: Piezas Reemplazadas
+                QUÉ: Input numérico entero
+                PARA QUÉ: Contar cuántas piezas se cambiaron
+                value="0": Valor por defecto cero
+                NOTA: Útil para control de inventario y costos
+            -->
             <label class="form-label">Piezas Reemplazadas</label>
             <input type="number" class="form-control" name="piezas_reemplazadas" value="0">
         </div>
+        
         <div class="col-md-4 mb-3">
+            <!-- 
+                CAMPO: Efectividad
+                QUÉ: Selector con 3 niveles
+                PARA QUÉ: Evaluar qué tan efectivo fue el mantenimiento
+                Alta: El problema se solucionó completamente
+                Media: Mejoró pero no se solucionó del todo
+                Baja: No mejoró o empeoró
+            -->
             <label class="form-label">Efectividad</label>
             <select class="form-select" name="efectividad">
-                <option value="Alta">Alta</option>
-                <option value="Media">Media</option>
-                <option value="Baja">Baja</option>
+                <option value="Alta">Alta</option>   <!-- Solución completa -->
+                <option value="Media">Media</option>  <!-- Solución parcial -->
+                <option value="Baja">Baja</option>    <!-- Solución insuficiente -->
             </select>
         </div>
+        
+        <!-- ======================================== -->
+        <!-- QUINTA FILA: Observaciones               -->
+        <!-- ======================================== -->
+        
         <div class="col-md-12 mb-3">
+            <!-- 
+                CAMPO: Observaciones
+                QUÉ: Área de texto multilínea
+                PARA QUÉ: Añadir detalles adicionales o notas del técnico
+                rows="2": Altura inicial de 2 líneas
+                NOTA: Diferente de "Descripción" que es más breve
+            -->
             <label class="form-label">Observaciones</label>
             <textarea class="form-control" name="observaciones" rows="2"></textarea>
         </div>
     </div>
 {% endblock %}
 
+<!-- ========================================== -->
+<!-- BLOQUE DE SCRIPTS JAVASCRIPT               -->
+<!-- ========================================== -->
+
 {% block scripts %}
-{{ super() }}
+{{ super() }}  <!-- Mantiene los scripts de la plantilla base -->
 <script>
-    async function llenarSelects() {
-        try {
-            const response = await fetch('/api/maquinas');
-            const maquinas = await response.json();
-            const select = document.getElementById('maquinaSelect');
-            select.innerHTML = '<option value="">Seleccionar...</option>' + 
-                maquinas.map(m => `<option value="${m._id}">${m.nombre}</option>`).join('');
-        } catch (error) {
-            console.error('Error cargando máquinas:', error);
-        }
-    }
+// ========================================================
+// 1. FUNCIÓN PARA LLENAR SELECTOR DE MÁQUINAS
+// ========================================================
+// QUÉ: Carga datos de la API para llenar el combo de máquinas
+// PARA QUÉ: Que el usuario pueda seleccionar de una lista
+//          actualizada en lugar de escribir manualmente
+// ========================================================
 
-    function renderizarTabla(data) {
-        const tbody = document.getElementById('tableBody');
-        if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No hay registros de mantenimiento</td></tr>';
-            return;
-        }
+async function llenarSelects() {
+    try {
+        // Hacemos petición GET a la API de máquinas
+        const response = await fetch('/api/maquinas');
+        // Verificamos que la respuesta sea exitosa
+        if (!response.ok) throw new Error('Error cargando máquinas');
+        // Convertir respuesta a JSON
+        const maquinas = await response.json();
         
-        tbody.innerHTML = data.map(item => `
-            <tr>
-                <td><strong>${item.maquina_nombre || 'N/A'}</strong></td>
-                <td>
-                    <span class="badge ${item.tipo === 'Preventivo' ? 'bg-success' : item.tipo === 'Correctivo' ? 'bg-danger' : 'bg-info'}">
-                        ${item.tipo || 'N/A'}
-                    </span>
-                </td>
-                <td><small>${item.fecha ? new Date(item.fecha).toLocaleString('es-ES') : 'N/A'}</small></td>
-                <td>${item.tecnico || 'N/A'}</td>
-                <td><small>${item.descripcion || 'N/A'}</small></td>
-                <td>${item.duracion_horas?.toFixed(1) || 0}h</td>
-                <td>$${item.costo?.toFixed(2) || '0.00'}</td>
-                <td>
-                    <span class="badge ${item.efectividad === 'Alta' ? 'bg-success' : item.efectividad === 'Media' ? 'bg-warning' : 'bg-danger'}">
-                        ${item.efectividad || 'N/A'}
-                    </span>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('${item._id}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('${item._id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
+        // Obtener el elemento select de máquinas
+        const select = document.getElementById('maquinaSelect');
+        
+        // Construir las opciones: primero la opción por defecto
+        select.innerHTML = '<option value="">Seleccionar...</option>' + 
+            // Luego una opción por cada máquina
+            maquinas.map(m => `<option value="${m._id}">${m.nombre}</option>`).join('');
+            // 
+            // _id: ID único de la máquina (se guarda en la BD)
+            // nombre: Nombre visible para el usuario
+            // 
+    } catch (error) {
+        // En caso de error, mostrar en consola
+        console.error('Error cargando máquinas:', error);
     }
+}
 
-    function llenarFormulario(data) {
-        Object.keys(data).forEach(key => {
-            const input = document.querySelector(`[name="${key}"]`);
-            if (input) {
-                if (key === 'fecha' && data[key]) {
-                    const date = new Date(data[key]);
-                    if (!isNaN(date.getTime())) {
-                        input.value = date.toISOString().slice(0, 16);
-                    }
-                } else if (input.type === 'select-one') {
-                    const options = input.options;
-                    for (let i = 0; i < options.length; i++) {
-                        if (options[i].value == data[key]) {
-                            input.selectedIndex = i;
-                            break;
-                        }
-                    }
-                } else {
-                    input.value = data[key] || '';
+// ========================================================
+// 2. FUNCIÓN PARA RENDERIZAR LA TABLA
+// ========================================================
+// QUÉ: Esta función recibe datos de la API y los convierte
+//      en filas HTML para mostrarlos en la tabla
+// PARA QUÉ: Visualizar todos los registros de mantenimiento
+// ========================================================
+
+function renderizarTabla(data) {
+    // Obtener el cuerpo de la tabla donde insertaremos los datos
+    const tbody = document.getElementById('tableBody');
+    
+    // Si no hay datos o el arreglo está vacío, mostrar mensaje
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No hay registros de mantenimiento</td></tr>';
+        return; // Salimos de la función
+    }
+    
+    // Convertir cada elemento del arreglo en una fila HTML
+    tbody.innerHTML = data.map(item => {
+        // ===== CLASE DE TIPO (COLORES) =====
+        // Asignar clase Bootstrap según el tipo de mantenimiento
+        const tipoClass = item.tipo === 'Preventivo' ? 'bg-success' :      // Verde para preventivo
+                          item.tipo === 'Correctivo' ? 'bg-danger' :      // Rojo para correctivo
+                          'bg-info';                                      // Azul para predictivo
+        
+        // ===== CLASE DE EFECTIVIDAD (COLORES) =====
+        // Asignar clase Bootstrap según la efectividad
+        const efectividadClass = item.efectividad === 'Alta' ? 'bg-success' :    // Verde para alta
+                                 item.efectividad === 'Media' ? 'bg-warning' :  // Amarillo para media
+                                 'bg-danger';                                   // Rojo para baja
+        
+        // ===== CONSTRUCCIÓN DE LA FILA =====
+        return `
+        <tr>
+            <!-- Columna 1: Máquina (en negrita) -->
+            <td><strong>${item.maquina_nombre || 'N/A'}</strong></td>
+            
+            <!-- Columna 2: Tipo con badge de color -->
+            <td>
+                <span class="badge ${tipoClass}">
+                    ${item.tipo || 'N/A'}
+                </span>
+            </td>
+            
+            <!-- Columna 3: Fecha formateada -->
+            <td><small>${item.fecha ? new Date(item.fecha).toLocaleString('es-ES') : 'N/A'}</small></td>
+            
+            <!-- Columna 4: Técnico -->
+            <td>${item.tecnico || 'N/A'}</td>
+            
+            <!-- Columna 5: Descripción -->
+            <td><small>${item.descripcion || 'N/A'}</small></td>
+            
+            <!-- Columna 6: Duración en horas -->
+            <td>${item.duracion_horas?.toFixed(1) || 0}h</td>
+            <!-- 
+                ?.toFixed(1): Operador de encadenamiento opcional
+                Si existe duracion_horas, lo formatea con 1 decimal
+                Si no existe, usa 0
+            -->
+            
+            <!-- Columna 7: Costo con formato moneda -->
+            <td>$${item.costo?.toFixed(2) || '0.00'}</td>
+            
+            <!-- Columna 8: Efectividad con badge de color -->
+            <td>
+                <span class="badge ${efectividadClass}">
+                    ${item.efectividad || 'N/A'}
+                </span>
+            </td>
+            
+            <!-- Columna 9: Botones de acción -->
+            <td>
+                <!-- Botón Editar -->
+                <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('${item._id}')">
+                    <i class="fas fa-edit"></i> <!-- Icono de lápiz -->
+                </button>
+                <!-- Botón Eliminar -->
+                <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('${item._id}')">
+                    <i class="fas fa-trash"></i> <!-- Icono de papelera -->
+                </button>
+            </td>
+        </tr>
+    `}).join(''); // join('') convierte el arreglo en una sola cadena de texto
+}
+
+// ========================================================
+// 3. FUNCIÓN PARA LLENAR FORMULARIO EN EDICIÓN
+// ========================================================
+// QUÉ: Recibe los datos de un registro y los coloca
+//      en los campos del formulario para editar
+// PARA QUÉ: Cuando el usuario da clic en "Editar",
+//          se cargan los datos existentes en el formulario
+// ========================================================
+
+function llenarFormulario(data) {
+    // Recorrer todas las propiedades del objeto data
+    Object.keys(data).forEach(key => {
+        // Buscar el campo del formulario con ese nombre
+        const input = document.querySelector(`[name="${key}"]`);
+        
+        // Si el campo existe, procedemos a llenarlo
+        if (input) {
+            // ===== CASO 1: Campo de fecha =====
+            if (key === 'fecha' && data[key]) {
+                // Convertir fecha ISO a formato local
+                const date = new Date(data[key]);
+                // Verificar que la fecha sea válida
+                if (!isNaN(date.getTime())) {
+                    // Formato para input datetime-local: YYYY-MM-DDThh:mm
+                    input.value = date.toISOString().slice(0, 16);
                 }
+            } 
+            // ===== CASO 2: Selector desplegable =====
+            else if (input.type === 'select-one') {
+                // Buscar la opción que tenga el mismo valor
+                const options = input.options;
+                for (let i = 0; i < options.length; i++) {
+                    // Comparar con == porque pueden ser números o strings
+                    if (options[i].value == data[key]) {
+                        input.selectedIndex = i; // Seleccionar esa opción
+                        break;
+                    }
+                }
+            } 
+            // ===== CASO 3: Campos de texto/número =====
+            else {
+                input.value = data[key] || ''; // Si no hay valor, dejar vacío
             }
-        });
-    }
+        }
+    });
+}
 
-    console.log('✅ mantenimiento.html cargado correctamente');
+// ========================================================
+// NOTA: Las funciones 'abrirModalEditar' y 'eliminarRegistro'
+//       están definidas en la plantilla base (crud_base.html)
+//       y son reutilizadas aquí.
+// ========================================================
+
 </script>
 {% endblock %}

@@ -1,258 +1,661 @@
 <!-- templates/crud_base.html -->
+<!-- 
+    ============================================================
+    PLANTILLA BASE: CRUD (Create, Read, Update, Delete)
+    ============================================================
+    Esta es la plantilla MAESTRA para todos los módulos CRUD.
+    TODOS los demás módulos (productos, máquinas, producción, etc.)
+    heredan de esta plantilla.
+    
+    QUÉ PROPORCIONA:
+    1. Estructura de tabla con encabezados dinámicos
+    2. Modal para crear/editar registros
+    3. Funciones JavaScript para CRUD completo
+    4. Manejo de errores y loading states
+    
+    PARA QUÉ: No repetir código en cada módulo
+    ============================================================
+-->
+
 {% extends "base.html" %}
+<!-- 
+    QUÉ: Hereda de la plantilla base del sistema
+    PARA QUÉ: Mantener la estructura común (navbar, footer, estilos)
+-->
+
+<!-- ============================================================ -->
+<!-- BLOQUE DE CONTENIDO PRINCIPAL                                 -->
+<!-- ============================================================ -->
 
 {% block content %}
+<!-- 
+    QUÉ: Contenido específico del CRUD
+    PARA QUÉ: Mostrar la tabla y el modal de creación/edición
+-->
+
+<!-- ============================================================ -->
+<!-- SECCIÓN 1: BARRA DE HERRAMIENTAS                              -->
+<!-- ============================================================ -->
+
 <div class="row mb-3">
+    <!-- 
+        QUÉ: Fila con botones de acción
+        PARA QUÉ: Permitir al usuario interactuar con los datos
+    -->
     <div class="col">
+        <!-- Botón: Nuevo Registro -->
         <button class="btn btn-primary" onclick="abrirModalCrear()">
             <i class="fas fa-plus"></i> Nuevo
+            <!-- 
+                QUÉ: Botón para crear nuevo registro
+                PARA QUÉ: Abrir el modal con formulario vacío
+                clase btn-primary: Botón azul (acción principal)
+                onclick: Llama a abrirModalCrear() definida abajo
+                icono fa-plus: Icono de "+" (Font Awesome)
+            -->
         </button>
+        
+        <!-- Botón: Actualizar Datos -->
         <button class="btn btn-outline-secondary" onclick="cargarDatos()">
             <i class="fas fa-sync"></i> Actualizar
+            <!-- 
+                QUÉ: Botón para recargar los datos
+                PARA QUÉ: Refrescar la tabla con datos actualizados
+                clase btn-outline-secondary: Botón gris con borde
+                onclick: Llama a cargarDatos() definida abajo
+                icono fa-sync: Icono de "sincronizar" (Font Awesome)
+            -->
         </button>
     </div>
 </div>
 
+<!-- ============================================================ -->
+<!-- SECCIÓN 2: TABLA DE DATOS                                    -->
+<!-- ============================================================ -->
+
 <div class="table-container">
+    <!-- 
+        QUÉ: Contenedor de la tabla
+        PARA QUÉ: Dar estilo y manejo de scroll si es necesario
+    -->
+    
     <table class="table table-hover" id="dataTable">
+        <!-- 
+            QUÉ: Tabla con estilo hover (resalta filas al pasar el mouse)
+            PARA QUÉ: Mostrar los datos de manera organizada
+            id="dataTable": Identificador para manipulación
+        -->
+        
+        <!-- ===== ENCABEZADO DE LA TABLA ===== -->
         <thead>
             <tr>
                 {% block table_headers %}{% endblock %}
+                <!-- 
+                    QUÉ: Bloque para encabezados de tabla
+                    PARA QUÉ: Cada módulo define sus propias columnas
+                    NOTA: Este bloque es REEMPLAZADO por el template hijo
+                -->
                 <th>Acciones</th>
+                <!-- 
+                    QUÉ: Columna fija para botones de acción
+                    PARA QUÉ: Mostrar botones Editar y Eliminar
+                    NOTA: Siempre está presente en todos los módulos
+                -->
             </tr>
         </thead>
+        
+        <!-- ===== CUERPO DE LA TABLA ===== -->
         <tbody id="tableBody">
+            <!-- 
+                QUÉ: Cuerpo de la tabla
+                PARA QUÉ: Mostrar las filas de datos
+                id="tableBody": Identificador para insertar datos dinámicos
+            -->
             <tr>
+                <!-- Mensaje de carga inicial -->
                 <td colspan="10" class="text-center text-muted">Cargando datos...</td>
+                <!-- 
+                    colspan="10": Ocupa todas las columnas
+                    text-center: Texto centrado
+                    text-muted: Texto gris (indica estado de carga)
+                -->
             </tr>
         </tbody>
     </table>
 </div>
 
-<!-- Modal Crear/Editar -->
+<!-- ============================================================ -->
+<!-- SECCIÓN 3: MODAL PARA CREAR/EDITAR                           -->
+<!-- ============================================================ -->
+
 <div class="modal fade" id="createModal" tabindex="-1">
+    <!-- 
+        QUÉ: Modal (ventana emergente) para formularios
+        PARA QUÉ: Crear o editar registros sin recargar la página
+        modal fade: Animación de desvanecimiento
+        id="createModal": Identificador único
+        tabindex="-1": Control de foco del teclado
+    -->
+    
     <div class="modal-dialog modal-lg">
+        <!-- 
+            QUÉ: Contenedor del diálogo modal
+            PARA QUÉ: Dar tamaño y posición al modal
+            modal-lg: Modal grande (para muchos campos)
+        -->
+        
         <div class="modal-content">
+            <!-- 
+                QUÉ: Contenido del modal
+                PARA QUÉ: Estructurar el formulario dentro del modal
+            -->
+            
+            <!-- ===== ENCABEZADO DEL MODAL ===== -->
             <div class="modal-header">
                 <h5 class="modal-title" id="modalTitle">Nuevo Registro</h5>
+                <!-- 
+                    QUÉ: Título del modal
+                    PARA QUÉ: Mostrar "Nuevo Registro" o "Editar Registro"
+                    id="modalTitle": Identificador para cambiar dinámicamente
+                -->
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <!-- 
+                    QUÉ: Botón para cerrar el modal
+                    PARA QUÉ: Cerrar sin guardar
+                    data-bs-dismiss="modal": Atributo de Bootstrap para cerrar
+                -->
             </div>
+            
+            <!-- ===== CUERPO DEL MODAL (FORMULARIO) ===== -->
             <div class="modal-body">
                 <form id="dataForm">
+                    <!-- 
+                        QUÉ: Formulario para ingresar datos
+                        PARA QUÉ: Capturar la información del registro
+                        id="dataForm": Identificador único
+                    -->
+                    
                     {% block form_fields %}{% endblock %}
+                    <!-- 
+                        QUÉ: Bloque para campos del formulario
+                        PARA QUÉ: Cada módulo define sus propios campos
+                        NOTA: Este bloque es REEMPLAZADO por el template hijo
+                    -->
+                    
                     <input type="hidden" id="editId" value="">
+                    <!-- 
+                        QUÉ: Campo oculto para almacenar el ID
+                        PARA QUÉ: Saber si se está editando o creando
+                        id="editId": Identificador para manipulación
+                        value="": Se llena con el ID cuando se edita
+                    -->
                 </form>
             </div>
+            
+            <!-- ===== PIE DEL MODAL (BOTONES) ===== -->
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="guardarRegistro()">Guardar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                    <!-- 
+                        QUÉ: Botón para cancelar
+                        PARA QUÉ: Cerrar el modal sin guardar
+                        btn-secondary: Botón gris
+                    -->
+                </button>
+                <button type="button" class="btn btn-primary" onclick="guardarRegistro()">
+                    Guardar
+                    <!-- 
+                        QUÉ: Botón para guardar
+                        PARA QUÉ: Enviar los datos a la API
+                        btn-primary: Botón azul (acción principal)
+                        onclick: Llama a guardarRegistro() definida abajo
+                    -->
+                </button>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
-{% block scripts %}
-<script>
-    const API_URL = '{% block api_url %}/api{% endblock %}';
-    let editando = false;
+<!-- ============================================================ -->
+<!-- BLOQUE DE SCRIPTS JAVASCRIPT                                 -->
+<!-- ============================================================ -->
 
-    // ==================== CARGAR DATOS ====================
-    async function cargarDatos() {
-        try {
-            console.log('📡 Cargando datos desde:', API_URL);
-            const response = await fetch(API_URL);
+{% block scripts %}
+<!-- 
+    QUÉ: Código JavaScript para funcionalidad CRUD
+    PARA QUÉ: 
+        - Cargar datos desde la API
+        - Crear, editar y eliminar registros
+        - Manejar el modal
+        - Gestionar errores
+-->
+
+<script>
+// ================================================================
+// 1. CONFIGURACIÓN INICIAL
+// ================================================================
+
+const API_URL = '{% block api_url %}/api{% endblock %}';
+// 
+// QUÉ: URL base de la API
+// PARA QUÉ: Hacer peticiones HTTP a los endpoints correctos
+// NOTA: El template hijo define su propia URL
+// Ejemplo: /api/productos, /api/maquinas, etc.
+//
+
+let editando = false;
+// 
+// QUÉ: Bandera para saber si estamos editando o creando
+// PARA QUÉ: Determinar si enviar POST o PUT
+// true: Estamos editando (PUT)
+// false: Estamos creando (POST)
+//
+
+// ================================================================
+// 2. FUNCIÓN: CARGAR DATOS
+// ================================================================
+// QUÉ: Obtiene todos los registros de la API
+// PARA QUÉ: Mostrar los datos en la tabla
+// ================================================================
+
+async function cargarDatos() {
+    try {
+        // Mensaje en consola para depuración
+        console.log('📡 Cargando datos desde:', API_URL);
+        
+        // ===== HACER PETICIÓN GET A LA API =====
+        const response = await fetch(API_URL);
+        // 
+        // QUÉ: Petición HTTP GET al endpoint
+        // PARA QUÉ: Obtener todos los registros
+        // await: Espera la respuesta
+        //
+        
+        // ===== VERIFICAR RESPUESTA =====
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        // 
+        // QUÉ: Validar que la respuesta sea exitosa
+        // PARA QUÉ: Manejar errores de red o servidor
+        // response.ok: true si status entre 200-299
+        //
+        
+        // ===== PARSEAR DATOS =====
+        const data = await response.json();
+        // 
+        // QUÉ: Convertir respuesta a JSON
+        // PARA QUÉ: Trabajar con objetos JavaScript
+        //
+        
+        console.log('📊 Datos recibidos:', data.length || 0, 'registros');
+        
+        // ===== VERIFICAR ERROR EN DATOS =====
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // ===== RENDERIZAR TABLA =====
+        // Verificar si existe la función renderizarTabla en el template hijo
+        if (typeof renderizarTabla === 'function') {
+            renderizarTabla(data);
+            // 
+            // QUÉ: Ejecuta la función del template hijo
+            // PARA QUÉ: Cada módulo decide cómo mostrar sus datos
+            // NOTA: Si no existe, muestra mensaje de error
+            //
+        } else {
+            console.warn('⚠️ La función renderizarTabla no está definida en el template hijo');
+            document.getElementById('tableBody').innerHTML = 
+                '<tr><td colspan="10" class="text-center text-warning">La función renderizarTabla no está definida</td></tr>';
+        }
+    } catch (error) {
+        // ===== MANEJO DE ERRORES =====
+        console.error('❌ Error cargando datos:', error);
+        document.getElementById('tableBody').innerHTML = 
+            `<tr><td colspan="10" class="text-center text-danger">Error al cargar datos: ${error.message}</td></tr>`;
+        // 
+        // QUÉ: Mostrar mensaje de error en la tabla
+        // PARA QUÉ: Informar al usuario del problema
+        //
+    }
+}
+
+// ================================================================
+// 3. FUNCIÓN: ABRIR MODAL CREAR
+// ================================================================
+// QUÉ: Abre el modal para crear un nuevo registro
+// PARA QUÉ: Mostrar formulario vacío
+// ================================================================
+
+function abrirModalCrear() {
+    // ===== RESETEAR ESTADO =====
+    editando = false;
+    // 
+    // QUÉ: Indicamos que es una creación
+    // PARA QUÉ: Enviar POST al guardar
+    //
+    
+    // ===== CAMBIAR TÍTULO =====
+    document.getElementById('modalTitle').textContent = 'Nuevo Registro';
+    // 
+    // QUÉ: Cambia el título del modal
+    // PARA QUÉ: Informar al usuario
+    //
+    
+    // ===== LIMPIAR CAMPOS =====
+    document.getElementById('editId').value = '';
+    // 
+    // QUÉ: Vaciar campo oculto
+    // PARA QUÉ: No enviar ID en la creación
+    //
+    
+    document.getElementById('dataForm').reset();
+    // 
+    // QUÉ: Reiniciar todos los campos del formulario
+    // PARA QUÉ: Valores por defecto
+    //
+    
+    // ===== LLENAR SELECTS =====
+    if (typeof llenarSelects === 'function') {
+        llenarSelects();
+        // 
+        // QUÉ: Ejecuta la función del template hijo si existe
+        // PARA QUÉ: Cargar datos en selectores (productos, máquinas, etc.)
+        // NOTA: No todos los módulos tienen selects
+        //
+    }
+    
+    // ===== ESTABLECER FECHA ACTUAL =====
+    const fechaInput = document.querySelector('[name="fecha"]');
+    if (fechaInput && fechaInput.type === 'datetime-local') {
+        const ahora = new Date();
+        fechaInput.value = ahora.toISOString().slice(0, 16);
+        // 
+        // QUÉ: Establece la fecha actual en el campo de fecha
+        // PARA QUÉ: Conveniencia para el usuario
+        // toISOString().slice(0, 16): Formato YYYY-MM-DDThh:mm
+        //
+    }
+    
+    // ===== ABRIR MODAL =====
+    const modal = new bootstrap.Modal(document.getElementById('createModal'));
+    modal.show();
+    // 
+    // QUÉ: Instancia y muestra el modal de Bootstrap
+    // PARA QUÉ: Mostrar el formulario al usuario
+    //
+}
+
+// ================================================================
+// 4. FUNCIÓN: ABRIR MODAL EDITAR
+// ================================================================
+// QUÉ: Abre el modal para editar un registro existente
+// PARA QUÉ: Cargar datos actuales en el formulario
+// ================================================================
+
+function abrirModalEditar(id) {
+    // ===== CONFIGURAR ESTADO =====
+    editando = true;
+    // 
+    // QUÉ: Indicamos que es una edición
+    // PARA QUÉ: Enviar PUT al guardar
+    //
+    
+    // ===== CAMBIAR TÍTULO =====
+    document.getElementById('modalTitle').textContent = 'Editar Registro';
+    
+    // ===== GUARDAR ID =====
+    document.getElementById('editId').value = id;
+    // 
+    // QUÉ: Almacenar ID en campo oculto
+    // PARA QUÉ: Enviarlo en la petición PUT
+    //
+    
+    // ===== LLENAR SELECTS =====
+    if (typeof llenarSelects === 'function') {
+        llenarSelects();
+        // 
+        // QUÉ: Cargar datos en selects ANTES de llenar formulario
+        // PARA QUÉ: Los selects estén disponibles cuando se asignen valores
+        //
+    }
+    
+    // ===== CARGAR DATOS DEL REGISTRO =====
+    fetch(`${API_URL}/${id}`)
+        // 
+        // QUÉ: Petición GET al endpoint con ID
+        // PARA QUÉ: Obtener los datos del registro específico
+        //
+        .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            const data = await response.json();
-            console.log('📊 Datos recibidos:', data.length || 0, 'registros');
-            
+            return response.json();
+        })
+        .then(data => {
             if (data.error) {
                 throw new Error(data.error);
             }
             
-            // Verificar si existe la función renderizarTabla en el template hijo
-            if (typeof renderizarTabla === 'function') {
-                renderizarTabla(data);
+            // ===== LLENAR FORMULARIO =====
+            if (typeof llenarFormulario === 'function') {
+                llenarFormulario(data);
+                // 
+                // QUÉ: Ejecuta función del template hijo
+                // PARA QUÉ: Cada módulo llena sus campos específicos
+                //
             } else {
-                console.warn('⚠️ La función renderizarTabla no está definida en el template hijo');
-                document.getElementById('tableBody').innerHTML = 
-                    '<tr><td colspan="10" class="text-center text-warning">La función renderizarTabla no está definida</td></tr>';
-            }
-        } catch (error) {
-            console.error('❌ Error cargando datos:', error);
-            document.getElementById('tableBody').innerHTML = 
-                `<tr><td colspan="10" class="text-center text-danger">Error al cargar datos: ${error.message}</td></tr>`;
-        }
-    }
-
-    // ==================== ABRIR MODAL CREAR ====================
-    function abrirModalCrear() {
-        editando = false;
-        document.getElementById('modalTitle').textContent = 'Nuevo Registro';
-        document.getElementById('editId').value = '';
-        document.getElementById('dataForm').reset();
-        
-        // Llamar a función específica para llenar selects si existe
-        if (typeof llenarSelects === 'function') {
-            llenarSelects();
-        }
-        
-        // Establecer fecha actual si existe el campo
-        const fechaInput = document.querySelector('[name="fecha"]');
-        if (fechaInput && fechaInput.type === 'datetime-local') {
-            const ahora = new Date();
-            fechaInput.value = ahora.toISOString().slice(0, 16);
-        }
-        
-        const modal = new bootstrap.Modal(document.getElementById('createModal'));
-        modal.show();
-    }
-
-    // ==================== ABRIR MODAL EDITAR ====================
-    function abrirModalEditar(id) {
-        editando = true;
-        document.getElementById('modalTitle').textContent = 'Editar Registro';
-        document.getElementById('editId').value = id;
-        
-        // Primero llenar selects si existe la función
-        if (typeof llenarSelects === 'function') {
-            llenarSelects();
-        }
-        
-        // Cargar datos del registro
-        fetch(`${API_URL}/${id}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                // Llenar formulario
-                if (typeof llenarFormulario === 'function') {
-                    llenarFormulario(data);
-                } else {
-                    // Llenado genérico
-                    Object.keys(data).forEach(key => {
-                        const input = document.querySelector(`[name="${key}"]`);
-                        if (input) {
-                            if (key === 'fecha' && data[key]) {
-                                const date = new Date(data[key]);
-                                if (!isNaN(date.getTime())) {
-                                    input.value = date.toISOString().slice(0, 16);
-                                }
-                            } else if (input.type === 'checkbox') {
-                                input.checked = data[key] === true;
-                            } else if (input.type === 'select-one') {
-                                // Buscar la opción con el valor
-                                const options = input.options;
-                                for (let i = 0; i < options.length; i++) {
-                                    if (options[i].value == data[key]) {
-                                        input.selectedIndex = i;
-                                        break;
-                                    }
-                                }
-                            } else {
-                                input.value = data[key] || '';
+                // ===== LLENADO GENÉRICO =====
+                Object.keys(data).forEach(key => {
+                    const input = document.querySelector(`[name="${key}"]`);
+                    if (input) {
+                        // Caso 1: Campo de fecha
+                        if (key === 'fecha' && data[key]) {
+                            const date = new Date(data[key]);
+                            if (!isNaN(date.getTime())) {
+                                input.value = date.toISOString().slice(0, 16);
                             }
+                        } 
+                        // Caso 2: Checkbox
+                        else if (input.type === 'checkbox') {
+                            input.checked = data[key] === true;
+                        } 
+                        // Caso 3: Selector
+                        else if (input.type === 'select-one') {
+                            const options = input.options;
+                            for (let i = 0; i < options.length; i++) {
+                                if (options[i].value == data[key]) {
+                                    input.selectedIndex = i;
+                                    break;
+                                }
+                            }
+                        } 
+                        // Caso 4: Texto/número
+                        else {
+                            input.value = data[key] || '';
                         }
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('❌ Error cargando datos para editar:', error);
-                alert('Error al cargar los datos: ' + error.message);
-            });
-        
-        const modal = new bootstrap.Modal(document.getElementById('createModal'));
-        modal.show();
-    }
-
-    // ==================== GUARDAR REGISTRO ====================
-    async function guardarRegistro() {
-        const form = document.getElementById('dataForm');
-        const formData = new FormData(form);
-        const data = {};
-        formData.forEach((value, key) => {
-            if (value !== '') {
-                data[key] = value;
+                    }
+                });
             }
+        })
+        .catch(error => {
+            console.error('❌ Error cargando datos para editar:', error);
+            alert('Error al cargar los datos: ' + error.message);
         });
-        
-        const id = document.getElementById('editId').value;
-        
-        // Convertir strings a números donde sea necesario
-        Object.keys(data).forEach(key => {
-            if (!isNaN(data[key]) && data[key] !== '') {
-                data[key] = Number(data[key]);
-            }
-        });
-
-        const method = editando ? 'PUT' : 'POST';
-        const url = editando ? `${API_URL}/${id}` : API_URL;
-
-        console.log('📤 Enviando:', { method, url, data });
-
-        try {
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            });
-            
-            const result = await response.json();
-            console.log('📥 Respuesta:', result);
-            
-            if (response.ok) {
-                const modal = bootstrap.Modal.getInstance(document.getElementById('createModal'));
-                if (modal) modal.hide();
-                cargarDatos();
-                alert(editando ? '✅ Registro actualizado' : '✅ Registro creado');
-            } else {
-                alert('❌ Error: ' + (result.error || 'Error al guardar'));
-            }
-        } catch (error) {
-            console.error('❌ Error guardando:', error);
-            alert('❌ Error al guardar: ' + error.message);
-        }
-    }
-
-    // ==================== ELIMINAR REGISTRO ====================
-    async function eliminarRegistro(id) {
-        if (!confirm('¿Está seguro de eliminar este registro?')) return;
-        
-        try {
-            const response = await fetch(`${API_URL}/${id}`, {
-                method: 'DELETE'
-            });
-            
-            if (response.ok) {
-                cargarDatos();
-                alert('✅ Registro eliminado');
-            } else {
-                const error = await response.json();
-                alert('❌ Error: ' + (error.error || 'Error al eliminar'));
-            }
-        } catch (error) {
-            console.error('❌ Error eliminando:', error);
-            alert('❌ Error al eliminar: ' + error.message);
-        }
-    }
-
-    // ==================== INICIALIZAR ====================
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('🚀 crud_base.html cargado, API_URL:', API_URL);
-        // cargarDatos() se llama automáticamente
-    });
     
-    // Cargar datos al inicio
-    document.addEventListener('DOMContentLoaded', cargarDatos);
+    // ===== ABRIR MODAL =====
+    const modal = new bootstrap.Modal(document.getElementById('createModal'));
+    modal.show();
+}
+
+// ================================================================
+// 5. FUNCIÓN: GUARDAR REGISTRO
+// ================================================================
+// QUÉ: Guarda el registro (crea o actualiza) enviando a la API
+// PARA QUÉ: Persistir los datos en la base de datos
+// ================================================================
+
+async function guardarRegistro() {
+    // ===== OBTENER DATOS DEL FORMULARIO =====
+    const form = document.getElementById('dataForm');
+    const formData = new FormData(form);
+    // 
+    // QUÉ: FormData captura todos los campos del formulario
+    // PARA QUÉ: Obtener valores de manera fácil
+    //
+    
+    const data = {};
+    formData.forEach((value, key) => {
+        if (value !== '') {
+            data[key] = value;
+        }
+    });
+    // 
+    // QUÉ: Convierte FormData a objeto JavaScript
+    // PARA QUÉ: Enviar como JSON a la API
+    //
+    
+    const id = document.getElementById('editId').value;
+    
+    // ===== CONVERTIR TIPOS DE DATOS =====
+    Object.keys(data).forEach(key => {
+        if (!isNaN(data[key]) && data[key] !== '') {
+            data[key] = Number(data[key]);
+        }
+    });
+    // 
+    // QUÉ: Convierte strings numéricos a números
+    // PARA QUÉ: La API reciba números, no strings
+    //
+    
+    // ===== DETERMINAR MÉTODO Y URL =====
+    const method = editando ? 'PUT' : 'POST';
+    const url = editando ? `${API_URL}/${id}` : API_URL;
+    // 
+    // QUÉ: Decide si es POST (crear) o PUT (actualizar)
+    // PARA QUÉ: Usar el verbo HTTP correcto
+    // POST: Enviar a /api/xxxx
+    // PUT: Enviar a /api/xxxx/{id}
+    //
+    
+    console.log('📤 Enviando:', { method, url, data });
+    
+    // ===== ENVIAR A LA API =====
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+            // 
+            // QUÉ: Envía los datos como JSON
+            // PARA QUÉ: La API pueda procesarlos
+            //
+        });
+        
+        const result = await response.json();
+        console.log('📥 Respuesta:', result);
+        
+        // ===== MANEJAR RESPUESTA =====
+        if (response.ok) {
+            // ===== ÉXITO =====
+            const modal = bootstrap.Modal.getInstance(document.getElementById('createModal'));
+            if (modal) modal.hide();
+            // 
+            // QUÉ: Cierra el modal si está abierto
+            // PARA QUÉ: Limpiar la interfaz
+            //
+            
+            cargarDatos();
+            // 
+            // QUÉ: Recarga los datos para mostrar el cambio
+            // PARA QUÉ: Actualizar la tabla
+            //
+            
+            alert(editando ? '✅ Registro actualizado' : '✅ Registro creado');
+            // 
+            // QUÉ: Muestra mensaje de éxito
+            // PARA QUÉ: Confirmar al usuario
+            //
+        } else {
+            // ===== ERROR DE API =====
+            alert('❌ Error: ' + (result.error || 'Error al guardar'));
+        }
+    } catch (error) {
+        // ===== ERROR DE RED =====
+        console.error('❌ Error guardando:', error);
+        alert('❌ Error al guardar: ' + error.message);
+    }
+}
+
+// ================================================================
+// 6. FUNCIÓN: ELIMINAR REGISTRO
+// ================================================================
+// QUÉ: Elimina un registro de la base de datos
+// PARA QUÉ: Remover datos no deseados
+// ================================================================
+
+async function eliminarRegistro(id) {
+    // ===== CONFIRMACIÓN =====
+    if (!confirm('¿Está seguro de eliminar este registro?')) return;
+    // 
+    // QUÉ: Pregunta al usuario antes de eliminar
+    // PARA QUÉ: Evitar eliminaciones accidentales
+    //
+    
+    // ===== ENVIAR PETICIÓN DELETE =====
+    try {
+        const response = await fetch(`${API_URL}/${id}`, {
+            method: 'DELETE'
+            // 
+            // QUÉ: Petición DELETE al endpoint con ID
+            // PARA QUÉ: Eliminar el registro específico
+            //
+        });
+        
+        // ===== MANEJAR RESPUESTA =====
+        if (response.ok) {
+            cargarDatos();
+            // 
+            // QUÉ: Recarga los datos para reflejar el cambio
+            // PARA QUÉ: Actualizar la tabla
+            //
+            
+            alert('✅ Registro eliminado');
+        } else {
+            const error = await response.json();
+            alert('❌ Error: ' + (error.error || 'Error al eliminar'));
+        }
+    } catch (error) {
+        console.error('❌ Error eliminando:', error);
+        alert('❌ Error al eliminar: ' + error.message);
+    }
+}
+
+// ================================================================
+// 7. INICIALIZAR LA PÁGINA
+// ================================================================
+// QUÉ: Configura la página cuando se carga
+// PARA QUÉ: Iniciar la aplicación
+// ================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 crud_base.html cargado, API_URL:', API_URL);
+    // 
+    // QUÉ: Mensaje de inicio en consola
+    // PARA QUÉ: Confirmar que la página cargó
+    //
+});
+
+// Cargar datos al inicio
+document.addEventListener('DOMContentLoaded', cargarDatos);
+// 
+// QUÉ: Ejecuta cargarDatos() cuando el DOM está listo
+// PARA QUÉ: Mostrar datos al cargar la página
+//
+
 </script>
 {% endblock %}

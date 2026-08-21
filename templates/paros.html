@@ -1,151 +1,396 @@
 <!-- templates/paros.html -->
+<!-- 
+    ==========================================
+    PLANTILLA: Gestión de Paros
+    ==========================================
+    Este archivo extiende (hereda) de 'crud_base.html'
+    que contiene la estructura base de todas las páginas CRUD.
+    Aquí definimos lo específico del módulo de Paros (tiempos muertos).
+-->
+
 {% extends "crud_base.html" %}
+<!-- 
+    QUÉ: Hereda de la plantilla base CRUD
+    PARA QUÉ: Reutilizar estructura común de formularios, tablas y modales
+-->
+
+<!-- ========================================== -->
+<!-- BLOQUES DE TÍTULO Y CONFIGURACIÓN          -->
+<!-- ========================================== -->
 
 {% block title %}Paros{% endblock %}
+<!-- 
+    QUÉ: Título de la pestaña del navegador
+    PARA QUÉ: Identificar la página como "Paros"
+-->
+
 {% block page_title %}Gestión de Paros{% endblock %}
+<!-- 
+    QUÉ: Título principal que se muestra en el encabezado
+    PARA QUÉ: Dar contexto al usuario sobre el módulo
+-->
+
 {% block api_url %}/api/paros{% endblock %}
+<!-- 
+    QUÉ: URL del endpoint API para paros
+    PARA QUÉ: La plantilla base usa esta URL para:
+             - GET: Obtener todos los paros
+             - POST: Crear nuevo paro
+             - PUT: Actualizar paro existente
+             - DELETE: Eliminar paro
+-->
+
+<!-- ========================================== -->
+<!-- ENCABEZADOS DE LA TABLA                    -->
+<!-- ========================================== -->
 
 {% block table_headers %}
-    <th>Máquina</th>
-    <th>Fecha</th>
-    <th>Duración</th>
-    <th>Causa</th>
-    <th>Operador</th>
-    <th>Acción</th>
-    <th>Costo</th>
+    <!-- 
+        QUÉ: Define las columnas que tendrá la tabla
+        PARA QUÉ: La plantilla base usa estos encabezados
+                 para construir la tabla dinámicamente
+    -->
+    <th>Máquina</th>          <!-- Máquina que tuvo el paro -->
+    <th>Fecha</th>            <!-- Fecha y hora del paro -->
+    <th>Duración</th>         <!-- Tiempo que duró el paro (minutos) -->
+    <th>Causa</th>            <!-- Razón del paro -->
+    <th>Operador</th>         <!-- Operador responsable -->
+    <th>Acción</th>           <!-- Qué se hizo para resolver -->
+    <th>Costo</th>            <!-- Costo estimado del paro -->
 {% endblock %}
 
+<!-- ========================================== -->
+<!-- CAMPOS DEL FORMULARIO                      -->
+<!-- ========================================== -->
+
 {% block form_fields %}
+    <!-- 
+        QUÉ: Define todos los campos del formulario de creación/edición
+        PARA QUÉ: La plantilla base usa estos campos para construir
+                 el formulario modal de manera dinámica
+    -->
+    
     <div class="row">
+        <!-- ======================================== -->
+        <!-- PRIMERA FILA: Máquina y Fecha            -->
+        <!-- ======================================== -->
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Máquina
+                QUÉ: Selector desplegable para elegir la máquina
+                PARA QUÉ: Asociar el paro a una máquina específica
+                name="maquina_id": Nombre del campo en el formulario
+                id="maquinaSelect": ID para manipular con JavaScript
+                required: Campo obligatorio
+            -->
             <label class="form-label">Máquina</label>
             <select class="form-select" name="maquina_id" id="maquinaSelect" required>
                 <option value="">Seleccionar...</option>
+                <!-- Las opciones se llenan dinámicamente con JavaScript -->
             </select>
         </div>
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Fecha
+                QUÉ: Input de fecha y hora
+                PARA QUÉ: Registrar cuándo ocurrió el paro
+                type="datetime-local": Muestra selector de fecha y hora
+                required: Campo obligatorio
+            -->
             <label class="form-label">Fecha</label>
             <input type="datetime-local" class="form-control" name="fecha" required>
         </div>
+        
+        <!-- ======================================== -->
+        <!-- SEGUNDA FILA: Duración y Causa           -->
+        <!-- ======================================== -->
+        
         <div class="col-md-4 mb-3">
+            <!-- 
+                CAMPO: Duración
+                QUÉ: Input numérico (minutos)
+                PARA QUÉ: Registrar cuánto tiempo duró el paro
+                required: Campo obligatorio
+                NOTA: Se usa para calcular impacto en producción
+            -->
             <label class="form-label">Duración (minutos)</label>
             <input type="number" class="form-control" name="duracion_minutos" required>
         </div>
+        
         <div class="col-md-8 mb-3">
+            <!-- 
+                CAMPO: Causa
+                QUÉ: Selector con 9 causas predefinidas
+                PARA QUÉ: Clasificar la razón del paro
+                required: Campo obligatorio
+                Falla eléctrica: Problemas eléctricos
+                Falla mecánica: Problemas de piezas móviles
+                Falla hidráulica: Problemas de sistema hidráulico
+                Falla neumática: Problemas de aire comprimido
+                Error de operador: Error humano
+                Falta de material: Sin materia prima
+                Mantenimiento no programado: Reparación inesperada
+                Problema de calidad: Defectos detectados
+                Problema de software: Fallas en el sistema
+            -->
             <label class="form-label">Causa</label>
             <select class="form-select" name="causa" required>
-                <option value="Falla eléctrica">Falla eléctrica</option>
-                <option value="Falla mecánica">Falla mecánica</option>
-                <option value="Falla hidráulica">Falla hidráulica</option>
-                <option value="Falla neumática">Falla neumática</option>
-                <option value="Error de operador">Error de operador</option>
-                <option value="Falta de material">Falta de material</option>
-                <option value="Mantenimiento no programado">Mantenimiento no programado</option>
-                <option value="Problema de calidad">Problema de calidad</option>
-                <option value="Problema de software">Problema de software</option>
+                <option value="Falla eléctrica">Falla eléctrica</option>           <!-- Electricidad -->
+                <option value="Falla mecánica">Falla mecánica</option>             <!-- Mecánico -->
+                <option value="Falla hidráulica">Falla hidráulica</option>         <!-- Hidráulico -->
+                <option value="Falla neumática">Falla neumática</option>           <!-- Neumático -->
+                <option value="Error de operador">Error de operador</option>       <!-- Humano -->
+                <option value="Falta de material">Falta de material</option>       <!-- Insumos -->
+                <option value="Mantenimiento no programado">Mantenimiento no programado</option> <!-- Imprevisto -->
+                <option value="Problema de calidad">Problema de calidad</option>   <!-- Calidad -->
+                <option value="Problema de software">Problema de software</option> <!-- Software -->
             </select>
         </div>
+        
+        <!-- ======================================== -->
+        <!-- TERCERA FILA: Operador y Acción          -->
+        <!-- ======================================== -->
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Operador Responsable
+                QUÉ: Campo de texto libre
+                PARA QUÉ: Registrar quién estaba operando la máquina
+                name="operador_responsable": Identificador del campo
+                required: Campo obligatorio
+            -->
             <label class="form-label">Operador Responsable</label>
             <input type="text" class="form-control" name="operador_responsable" required>
         </div>
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Acción Tomada
+                QUÉ: Selector con 6 acciones predefinidas
+                PARA QUÉ: Registrar qué se hizo para resolver el paro
+                required: Campo obligatorio
+                Reinicio: Reiniciar la máquina
+                Llamar a mantenimiento: Solicitar ayuda técnica
+                Reemplazar pieza: Cambiar componente dañado
+                Ajustar parámetros: Cambiar configuración
+                Esperar material: Esperar insumos
+                Ninguna: No se tomó acción (espera)
+            -->
             <label class="form-label">Acción Tomada</label>
             <select class="form-select" name="accion_tomada" required>
-                <option value="Reinicio">Reinicio</option>
-                <option value="Llamar a mantenimiento">Llamar a mantenimiento</option>
-                <option value="Reemplazar pieza">Reemplazar pieza</option>
-                <option value="Ajustar parámetros">Ajustar parámetros</option>
-                <option value="Esperar material">Esperar material</option>
-                <option value="Ninguna">Ninguna</option>
+                <option value="Reinicio">Reinicio</option>                       <!-- Reiniciar -->
+                <option value="Llamar a mantenimiento">Llamar a mantenimiento</option> <!-- Ayuda técnica -->
+                <option value="Reemplazar pieza">Reemplazar pieza</option>       <!-- Cambiar pieza -->
+                <option value="Ajustar parámetros">Ajustar parámetros</option>   <!-- Ajustar -->
+                <option value="Esperar material">Esperar material</option>       <!-- Esperar -->
+                <option value="Ninguna">Ninguna</option>                         <!-- Sin acción -->
             </select>
         </div>
+        
+        <!-- ======================================== -->
+        <!-- CUARTA FILA: Costo y Tiempo Resolución   -->
+        <!-- ======================================== -->
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Costo Estimado
+                QUÉ: Input numérico con decimales
+                PARA QUÉ: Estimar el costo económico del paro
+                step="0.01": Permite centésimas (moneda)
+                value="0": Valor por defecto cero
+                NOTA: Incluye tiempo perdido + piezas + mano de obra
+            -->
             <label class="form-label">Costo Estimado</label>
             <input type="number" step="0.01" class="form-control" name="costo_estimado" value="0">
         </div>
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Tiempo Resolución
+                QUÉ: Input numérico (minutos)
+                PARA QUÉ: Registrar cuánto tomó resolver el paro
+                value="0": Valor por defecto cero
+                NOTA: Diferente de duración (puede ser mayor)
+            -->
             <label class="form-label">Tiempo Resolución (min)</label>
             <input type="number" class="form-control" name="tiempo_resolucion_minutos" value="0">
         </div>
+        
+        <!-- ======================================== -->
+        <!-- QUINTA FILA: Observaciones               -->
+        <!-- ======================================== -->
+        
         <div class="col-md-12 mb-3">
+            <!-- 
+                CAMPO: Observaciones
+                QUÉ: Área de texto multilínea
+                PARA QUÉ: Añadir detalles adicionales del paro
+                rows="2": Altura inicial de 2 líneas
+            -->
             <label class="form-label">Observaciones</label>
             <textarea class="form-control" name="observaciones" rows="2"></textarea>
         </div>
     </div>
 {% endblock %}
 
+<!-- ========================================== -->
+<!-- BLOQUE DE SCRIPTS JAVASCRIPT               -->
+<!-- ========================================== -->
+
 {% block scripts %}
-{{ super() }}
+{{ super() }}  <!-- Mantiene los scripts de la plantilla base -->
 <script>
-    async function llenarSelects() {
-        try {
-            const response = await fetch('/api/maquinas');
-            const maquinas = await response.json();
-            const select = document.getElementById('maquinaSelect');
-            select.innerHTML = '<option value="">Seleccionar...</option>' + 
-                maquinas.map(m => `<option value="${m._id}">${m.nombre}</option>`).join('');
-        } catch (error) {
-            console.error('Error cargando máquinas:', error);
-        }
-    }
+// ========================================================
+// 1. FUNCIÓN PARA LLENAR SELECTOR DE MÁQUINAS
+// ========================================================
+// QUÉ: Carga datos de la API para llenar el combo de máquinas
+// PARA QUÉ: Que el usuario pueda seleccionar de una lista
+//          actualizada en lugar de escribir manualmente
+// ========================================================
 
-    function renderizarTabla(data) {
-        const tbody = document.getElementById('tableBody');
-        if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay registros de paros</td></tr>';
-            return;
-        }
+async function llenarSelects() {
+    try {
+        // Hacemos petición GET a la API de máquinas
+        const response = await fetch('/api/maquinas');
+        // Verificamos que la respuesta sea exitosa
+        if (!response.ok) throw new Error('Error cargando máquinas');
+        // Convertir respuesta a JSON
+        const maquinas = await response.json();
         
-        tbody.innerHTML = data.map(item => `
-            <tr>
-                <td><strong>${item.maquina_nombre || 'N/A'}</strong></td>
-                <td><small>${item.fecha ? new Date(item.fecha).toLocaleString('es-ES') : 'N/A'}</small></td>
-                <td>
-                    <span class="badge ${item.duracion_minutos > 120 ? 'bg-danger' : item.duracion_minutos > 30 ? 'bg-warning' : 'bg-success'}">
-                        ${item.duracion_minutos || 0} min
-                    </span>
-                </td>
-                <td><small>${item.causa || 'N/A'}</small></td>
-                <td>${item.operador_responsable || 'N/A'}</td>
-                <td><small>${item.accion_tomada || 'N/A'}</small></td>
-                <td>$${item.costo_estimado?.toFixed(2) || '0.00'}</td>
-                <td>
-                    <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('${item._id}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('${item._id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
+        // Obtener el elemento select de máquinas
+        const select = document.getElementById('maquinaSelect');
+        
+        // Construir las opciones: primero la opción por defecto
+        select.innerHTML = '<option value="">Seleccionar...</option>' + 
+            // Luego una opción por cada máquina
+            maquinas.map(m => `<option value="${m._id}">${m.nombre}</option>`).join('');
+            // 
+            // _id: ID único de la máquina (se guarda en la BD)
+            // nombre: Nombre visible para el usuario
+            // 
+    } catch (error) {
+        // En caso de error, mostrar en consola
+        console.error('Error cargando máquinas:', error);
     }
+}
 
-    function llenarFormulario(data) {
-        Object.keys(data).forEach(key => {
-            const input = document.querySelector(`[name="${key}"]`);
-            if (input) {
-                if (key === 'fecha' && data[key]) {
-                    const date = new Date(data[key]);
-                    if (!isNaN(date.getTime())) {
-                        input.value = date.toISOString().slice(0, 16);
-                    }
-                } else if (input.type === 'select-one') {
-                    const options = input.options;
-                    for (let i = 0; i < options.length; i++) {
-                        if (options[i].value == data[key]) {
-                            input.selectedIndex = i;
-                            break;
-                        }
-                    }
-                } else {
-                    input.value = data[key] || '';
+// ========================================================
+// 2. FUNCIÓN PARA RENDERIZAR LA TABLA
+// ========================================================
+// QUÉ: Esta función recibe datos de la API y los convierte
+//      en filas HTML para mostrarlos en la tabla
+// PARA QUÉ: Visualizar todos los registros de paros
+// ========================================================
+
+function renderizarTabla(data) {
+    // Obtener el cuerpo de la tabla donde insertaremos los datos
+    const tbody = document.getElementById('tableBody');
+    
+    // Si no hay datos o el arreglo está vacío, mostrar mensaje
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay registros de paros</td></tr>';
+        return; // Salimos de la función
+    }
+    
+    // Convertir cada elemento del arreglo en una fila HTML
+    tbody.innerHTML = data.map(item => {
+        // ===== CLASE DE DURACIÓN (COLORES) =====
+        // Asignar clase Bootstrap según la duración del paro
+        const duracionClass = item.duracion_minutos > 120 ? 'bg-danger' :      // Rojo: > 2 horas
+                              item.duracion_minutos > 30 ? 'bg-warning' :     // Amarillo: 30-120 min
+                              'bg-success';                                    // Verde: < 30 min
+        
+        // ===== CONSTRUCCIÓN DE LA FILA =====
+        return `
+        <tr>
+            <!-- Columna 1: Máquina (en negrita) -->
+            <td><strong>${item.maquina_nombre || 'N/A'}</strong></td>
+            
+            <!-- Columna 2: Fecha formateada -->
+            <td><small>${item.fecha ? new Date(item.fecha).toLocaleString('es-ES') : 'N/A'}</small></td>
+            
+            <!-- Columna 3: Duración con badge de color -->
+            <td>
+                <span class="badge ${duracionClass}">
+                    ${item.duracion_minutos || 0} min
+                </span>
+            </td>
+            
+            <!-- Columna 4: Causa -->
+            <td><small>${item.causa || 'N/A'}</small></td>
+            
+            <!-- Columna 5: Operador Responsable -->
+            <td>${item.operador_responsable || 'N/A'}</td>
+            
+            <!-- Columna 6: Acción Tomada -->
+            <td><small>${item.accion_tomada || 'N/A'}</small></td>
+            
+            <!-- Columna 7: Costo Estimado -->
+            <td>$${item.costo_estimado?.toFixed(2) || '0.00'}</td>
+            
+            <!-- Columna 8: Botones de acción -->
+            <td>
+                <!-- Botón Editar -->
+                <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('${item._id}')">
+                    <i class="fas fa-edit"></i> <!-- Icono de lápiz -->
+                </button>
+                <!-- Botón Eliminar -->
+                <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('${item._id}')">
+                    <i class="fas fa-trash"></i> <!-- Icono de papelera -->
+                </button>
+            </td>
+        </tr>
+    `}).join(''); // join('') convierte el arreglo en una sola cadena de texto
+}
+
+// ========================================================
+// 3. FUNCIÓN PARA LLENAR FORMULARIO EN EDICIÓN
+// ========================================================
+// QUÉ: Recibe los datos de un paro y los coloca
+//      en los campos del formulario para editar
+// PARA QUÉ: Cuando el usuario da clic en "Editar",
+//          se cargan los datos existentes en el formulario
+// ========================================================
+
+function llenarFormulario(data) {
+    // Recorrer todas las propiedades del objeto data
+    Object.keys(data).forEach(key => {
+        // Buscar el campo del formulario con ese nombre
+        const input = document.querySelector(`[name="${key}"]`);
+        
+        // Si el campo existe, procedemos a llenarlo
+        if (input) {
+            // ===== CASO 1: Campo de fecha =====
+            if (key === 'fecha' && data[key]) {
+                // Convertir fecha ISO a formato local
+                const date = new Date(data[key]);
+                // Verificar que la fecha sea válida
+                if (!isNaN(date.getTime())) {
+                    // Formato para input datetime-local: YYYY-MM-DDThh:mm
+                    input.value = date.toISOString().slice(0, 16);
                 }
+            } 
+            // ===== CASO 2: Selector desplegable =====
+            else if (input.type === 'select-one') {
+                // Buscar la opción que tenga el mismo valor
+                const options = input.options;
+                for (let i = 0; i < options.length; i++) {
+                    // Comparar con == porque pueden ser números o strings
+                    if (options[i].value == data[key]) {
+                        input.selectedIndex = i; // Seleccionar esa opción
+                        break;
+                    }
+                }
+            } 
+            // ===== CASO 3: Campos de texto/número =====
+            else {
+                input.value = data[key] || ''; // Si no hay valor, dejar vacío
             }
-        });
-    }
+        }
+    });
+}
 
-    console.log('✅ paros.html cargado correctamente');
 </script>
 {% endblock %}

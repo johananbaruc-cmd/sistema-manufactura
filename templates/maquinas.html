@@ -1,76 +1,251 @@
 <!-- templates/maquinas.html -->
+<!-- 
+    ==========================================
+    PLANTILLA: Gestión de Máquinas
+    ==========================================
+    Este archivo extiende (hereda) de 'crud_base.html'
+    que contiene la estructura base de todas las páginas CRUD.
+    Aquí definimos lo específico del módulo de Máquinas.
+-->
+
 {% extends "crud_base.html" %}
+<!-- 
+    QUÉ: Hereda de la plantilla base CRUD
+    PARA QUÉ: Reutilizar estructura común de formularios, tablas y modales
+-->
+
+<!-- ========================================== -->
+<!-- BLOQUES DE TÍTULO Y CONFIGURACIÓN          -->
+<!-- ========================================== -->
 
 {% block title %}Máquinas{% endblock %}
+<!-- 
+    QUÉ: Título de la pestaña del navegador
+    PARA QUÉ: Identificar la página como "Máquinas"
+-->
+
 {% block page_title %}Gestión de Máquinas{% endblock %}
+<!-- 
+    QUÉ: Título principal que se muestra en el encabezado
+    PARA QUÉ: Dar contexto al usuario sobre el módulo
+-->
+
 {% block api_url %}/api/maquinas{% endblock %}
+<!-- 
+    QUÉ: URL del endpoint API para máquinas
+    PARA QUÉ: La plantilla base usa esta URL para:
+             - GET: Obtener todas las máquinas
+             - POST: Crear nueva máquina
+             - PUT: Actualizar máquina existente
+             - DELETE: Eliminar máquina
+-->
+
+<!-- ========================================== -->
+<!-- ENCABEZADOS DE LA TABLA                    -->
+<!-- ========================================== -->
 
 {% block table_headers %}
-    <th>Nombre</th>
-    <th>Tipo</th>
-    <th>Marca</th>
-    <th>Estado</th>
-    <th>Ubicación</th>
-    <th>Horas Operación</th>
-    <th>Lecturas</th>
+    <!-- 
+        QUÉ: Define las columnas que tendrá la tabla
+        PARA QUÉ: La plantilla base usa estos encabezados
+                 para construir la tabla dinámicamente
+    -->
+    <th>Nombre</th>           <!-- Nombre de la máquina -->
+    <th>Tipo</th>             <!-- Tipo de máquina (CNC, Robot, etc.) -->
+    <th>Marca</th>            <!-- Marca del fabricante -->
+    <th>Estado</th>           <!-- Estado actual: operando/mantenimiento/parada -->
+    <th>Ubicación</th>        <!-- Dónde está ubicada físicamente -->
+    <th>Horas Operación</th>  <!-- Total de horas de operación acumuladas -->
+    <th>Lecturas</th>         <!-- Cantidad de lecturas de sensores -->
 {% endblock %}
 
+<!-- ========================================== -->
+<!-- CAMPOS DEL FORMULARIO                      -->
+<!-- ========================================== -->
+
 {% block form_fields %}
+    <!-- 
+        QUÉ: Define todos los campos del formulario de creación/edición
+        PARA QUÉ: La plantilla base usa estos campos para construir
+                 el formulario modal de manera dinámica
+    -->
+    
     <div class="row">
+        <!-- ======================================== -->
+        <!-- PRIMERA FILA: Nombre y Tipo              -->
+        <!-- ======================================== -->
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Nombre
+                QUÉ: Campo de texto
+                PARA QUÉ: Identificar la máquina de manera única
+                required: Campo obligatorio
+                NOTA: Nombre amigable para el usuario
+            -->
             <label class="form-label">Nombre</label>
             <input type="text" class="form-control" name="nombre" required>
         </div>
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Tipo de Máquina
+                QUÉ: Selector con 8 tipos predefinidos
+                PARA QUÉ: Clasificar la máquina por su función
+                CNC: Control Numérico por Computadora
+                Impresora 3D: Fabricación aditiva
+                Robot: Automatización
+                Moldadora: Moldeo de piezas
+                Ensambladora: Ensamblaje de componentes
+                Soldadora: Unión de metales
+                Pulidora: Acabado superficial
+                Cortadora: Corte de materiales
+            -->
             <label class="form-label">Tipo</label>
             <select class="form-select" name="tipo" required>
-                <option value="CNC">CNC</option>
-                <option value="Impresora 3D">Impresora 3D</option>
-                <option value="Robot">Robot</option>
-                <option value="Moldadora">Moldadora</option>
-                <option value="Ensambladora">Ensambladora</option>
-                <option value="Soldadora">Soldadora</option>
-                <option value="Pulidora">Pulidora</option>
-                <option value="Cortadora">Cortadora</option>
+                <option value="CNC">CNC</option>               <!-- Control numérico -->
+                <option value="Impresora 3D">Impresora 3D</option> <!-- Impresión 3D -->
+                <option value="Robot">Robot</option>           <!-- Robot industrial -->
+                <option value="Moldadora">Moldadora</option>   <!-- Moldeo -->
+                <option value="Ensambladora">Ensambladora</option> <!-- Ensamblaje -->
+                <option value="Soldadora">Soldadora</option>   <!-- Soldadura -->
+                <option value="Pulidora">Pulidora</option>     <!-- Pulido -->
+                <option value="Cortadora">Cortadora</option>   <!-- Corte -->
             </select>
         </div>
+        
+        <!-- ======================================== -->
+        <!-- SEGUNDA FILA: Marca, Modelo y Estado      -->
+        <!-- ======================================== -->
+        
         <div class="col-md-4 mb-3">
+            <!-- 
+                CAMPO: Marca
+                QUÉ: Campo de texto
+                PARA QUÉ: Registrar el fabricante de la máquina
+                required: Campo obligatorio
+                Ejemplo: "Fanuc", "Siemens", "Haas"
+            -->
             <label class="form-label">Marca</label>
             <input type="text" class="form-control" name="marca" required>
         </div>
+        
         <div class="col-md-4 mb-3">
+            <!-- 
+                CAMPO: Modelo
+                QUÉ: Campo de texto
+                PARA QUÉ: Registrar el modelo específico
+                required: Campo obligatorio
+                Ejemplo: "VF-2", "SINUMERIK 840D"
+            -->
             <label class="form-label">Modelo</label>
             <input type="text" class="form-control" name="modelo" required>
         </div>
+        
         <div class="col-md-4 mb-3">
+            <!-- 
+                CAMPO: Estado
+                QUÉ: Selector con 3 estados posibles
+                PARA QUÉ: Conocer la disponibilidad de la máquina
+                operando: Funcionando normalmente
+                mantenimiento: En reparación o mantenimiento
+                parada: Detenida (no operativa)
+            -->
             <label class="form-label">Estado</label>
             <select class="form-select" name="estado" required>
-                <option value="operando">Operando</option>
-                <option value="mantenimiento">Mantenimiento</option>
-                <option value="parada">Parada</option>
+                <option value="operando">Operando</option>           <!-- Funcionando -->
+                <option value="mantenimiento">Mantenimiento</option> <!-- En reparación -->
+                <option value="parada">Parada</option>               <!-- Detenida -->
             </select>
         </div>
+        
+        <!-- ======================================== -->
+        <!-- TERCERA FILA: Ubicación                   -->
+        <!-- ======================================== -->
+        
         <div class="col-md-12 mb-3">
+            <!-- 
+                CAMPO: Ubicación
+                QUÉ: Campo de texto con placeholder
+                PARA QUÉ: Registrar dónde está físicamente la máquina
+                placeholder: Texto de ejemplo para orientar al usuario
+                Ejemplo: "Planta 2 - Línea de Ensamblaje 3"
+            -->
             <label class="form-label">Ubicación</label>
             <input type="text" class="form-control" name="ubicacion" placeholder="Planta X - Línea Y">
         </div>
+        
+        <!-- ======================================== -->
+        <!-- CUARTA FILA: Horas y Temperatura         -->
+        <!-- ======================================== -->
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Horas de Operación
+                QUÉ: Input numérico
+                PARA QUÉ: Registrar el total de horas de uso
+                value="1000": Valor por defecto (horas iniciales)
+                NOTA: Se usa para planificar mantenimiento preventivo
+            -->
             <label class="form-label">Horas de Operación</label>
             <input type="number" class="form-control" name="horas_operacion" value="1000">
         </div>
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Temperatura Operativa
+                QUÉ: Input numérico con decimales
+                PARA QUÉ: Registrar temperatura de trabajo en °C
+                step="0.1": Permite decimales
+                value="70": Valor por defecto (70°C)
+                NOTA: Útil para monitoreo predictivo
+            -->
             <label class="form-label">Temperatura Operativa (°C)</label>
             <input type="number" step="0.1" class="form-control" name="temperatura_operativa" value="70">
         </div>
+        
+        <!-- ======================================== -->
+        <!-- QUINTA FILA: Presión y Vibración         -->
+        <!-- ======================================== -->
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Presión Operativa
+                QUÉ: Input numérico con decimales
+                PARA QUÉ: Registrar presión de trabajo (PSI o bar)
+                step="0.1": Permite decimales
+                value="50": Valor por defecto (50 PSI)
+                NOTA: Importante para máquinas hidráulicas/neumáticas
+            -->
             <label class="form-label">Presión Operativa</label>
             <input type="number" step="0.1" class="form-control" name="presion_operativa" value="50">
         </div>
+        
         <div class="col-md-6 mb-3">
+            <!-- 
+                CAMPO: Vibración Operativa
+                QUÉ: Input numérico con decimales (mm/s o g)
+                PARA QUÉ: Registrar nivel de vibración
+                step="0.01": Alta precisión
+                value="0.5": Valor por defecto (0.5 mm/s)
+                NOTA: Vibración alta indica posible desgaste
+            -->
             <label class="form-label">Vibración Operativa</label>
             <input type="number" step="0.01" class="form-control" name="vibracion_operativa" value="0.5">
         </div>
+        
+        <!-- ======================================== -->
+        <!-- SEXTA FILA: Historial de Anomalías       -->
+        <!-- ======================================== -->
+        
         <div class="col-md-12 mb-3">
+            <!-- 
+                CAMPO: Historial de Anomalías
+                QUÉ: Checkbox
+                PARA QUÉ: Indicar si la máquina tiene anomalías registradas
+                value="true": Valor cuando está marcado
+                NOTA: Permite filtrar máquinas con problemas
+            -->
             <div class="form-check">
                 <input class="form-check-input" type="checkbox" name="tiene_historial_anomalias" value="true">
                 <label class="form-check-label">Tiene historial de anomalías</label>
@@ -79,57 +254,129 @@
     </div>
 {% endblock %}
 
+<!-- ========================================== -->
+<!-- BLOQUE DE SCRIPTS JAVASCRIPT               -->
+<!-- ========================================== -->
+
 {% block scripts %}
-{{ super() }}
+{{ super() }}  <!-- Mantiene los scripts de la plantilla base -->
 <script>
-    function renderizarTabla(data) {
-        const tbody = document.getElementById('tableBody');
-        if (!data || data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay máquinas</td></tr>';
-            return;
-        }
+// ========================================================
+// 1. FUNCIÓN PARA RENDERIZAR LA TABLA
+// ========================================================
+// QUÉ: Esta función recibe datos de la API y los convierte
+//      en filas HTML para mostrarlos en la tabla
+// PARA QUÉ: Visualizar todas las máquinas registradas
+// ========================================================
+
+function renderizarTabla(data) {
+    // Obtener el cuerpo de la tabla donde insertaremos los datos
+    const tbody = document.getElementById('tableBody');
+    
+    // Si no hay datos o el arreglo está vacío, mostrar mensaje
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay máquinas</td></tr>';
+        return; // Salimos de la función
+    }
+    
+    // Convertir cada elemento del arreglo en una fila HTML
+    tbody.innerHTML = data.map(item => {
+        // ===== CLASE DE ESTADO (COLORES) =====
+        // Asignar clase Bootstrap según el estado de la máquina
+        const estadoClass = item.estado === 'operando' ? 'bg-success' :      // Verde: operando
+                            item.estado === 'mantenimiento' ? 'bg-warning' : // Amarillo: mantenimiento
+                            'bg-danger';                                    // Rojo: parada
         
-        tbody.innerHTML = data.map(item => `
-            <tr>
-                <td><strong>${item.nombre || 'N/A'}</strong></td>
-                <td><span class="badge bg-info">${item.tipo || 'N/A'}</span></td>
-                <td>${item.marca || 'N/A'}</td>
-                <td>
-                    <span class="badge ${item.estado === 'operando' ? 'bg-success' : item.estado === 'mantenimiento' ? 'bg-warning' : 'bg-danger'}">
-                        ${item.estado || 'N/A'}
-                    </span>
-                </td>
-                <td><small>${item.ubicacion || 'N/A'}</small></td>
-                <td>${item.horas_operacion?.toLocaleString() || 0}</td>
-                <td>
-                    <span class="badge bg-secondary">${item.lecturas_sensores?.length || 0}</span>
-                    ${item.tiene_historial_anomalias ? '<i class="fas fa-exclamation-triangle text-warning ms-1" title="Tiene anomalías"></i>' : ''}
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('${item._id}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('${item._id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    }
+        // ===== CONSTRUCCIÓN DE LA FILA =====
+        return `
+        <tr>
+            <!-- Columna 1: Nombre (en negrita) -->
+            <td><strong>${item.nombre || 'N/A'}</strong></td>
+            
+            <!-- Columna 2: Tipo con badge azul -->
+            <td><span class="badge bg-info">${item.tipo || 'N/A'}</span></td>
+            
+            <!-- Columna 3: Marca -->
+            <td>${item.marca || 'N/A'}</td>
+            
+            <!-- Columna 4: Estado con badge de color -->
+            <td>
+                <span class="badge ${estadoClass}">
+                    ${item.estado || 'N/A'}
+                </span>
+            </td>
+            
+            <!-- Columna 5: Ubicación -->
+            <td><small>${item.ubicacion || 'N/A'}</small></td>
+            
+            <!-- Columna 6: Horas de operación formateadas -->
+            <td>${item.horas_operacion?.toLocaleString() || 0}</td>
+            <!-- 
+                ?.toLocaleString(): Formatea números con separadores de miles
+                Ejemplo: 15000 → "15,000"
+            -->
+            
+            <!-- Columna 7: Lecturas de sensores -->
+            <td>
+                <!-- Badge con número de lecturas -->
+                <span class="badge bg-secondary">${item.lecturas_sensores?.length || 0}</span>
+                
+                <!-- Icono de advertencia si tiene anomalías -->
+                ${item.tiene_historial_anomalias ? '<i class="fas fa-exclamation-triangle text-warning ms-1" title="Tiene anomalías"></i>' : ''}
+                <!-- 
+                    QUÉ: Muestra un triángulo de advertencia
+                    PARA QUÉ: Indicar visualmente que la máquina tiene problemas
+                    ms-1: Margen izquierdo pequeño
+                    title: Tooltip al pasar el mouse
+                -->
+            </td>
+            
+            <!-- Columna 8: Botones de acción -->
+            <td>
+                <!-- Botón Editar -->
+                <button class="btn btn-sm btn-warning" onclick="abrirModalEditar('${item._id}')">
+                    <i class="fas fa-edit"></i> <!-- Icono de lápiz -->
+                </button>
+                <!-- Botón Eliminar -->
+                <button class="btn btn-sm btn-danger" onclick="eliminarRegistro('${item._id}')">
+                    <i class="fas fa-trash"></i> <!-- Icono de papelera -->
+                </button>
+            </td>
+        </tr>
+    `}).join(''); // join('') convierte el arreglo en una sola cadena de texto
+}
 
-    function llenarFormulario(data) {
-        Object.keys(data).forEach(key => {
-            const input = document.querySelector(`[name="${key}"]`);
-            if (input) {
-                if (input.type === 'checkbox') {
-                    input.checked = data[key] === true;
-                } else {
-                    input.value = data[key] || '';
-                }
+// ========================================================
+// 2. FUNCIÓN PARA LLENAR FORMULARIO EN EDICIÓN
+// ========================================================
+// QUÉ: Recibe los datos de una máquina y los coloca
+//      en los campos del formulario para editar
+// PARA QUÉ: Cuando el usuario da clic en "Editar",
+//          se cargan los datos existentes en el formulario
+// ========================================================
+
+function llenarFormulario(data) {
+    // Recorrer todas las propiedades del objeto data
+    Object.keys(data).forEach(key => {
+        // Buscar el campo del formulario con ese nombre
+        const input = document.querySelector(`[name="${key}"]`);
+        
+        // Si el campo existe, procedemos a llenarlo
+        if (input) {
+            // ===== CASO 1: Checkbox =====
+            if (input.type === 'checkbox') {
+                // Marcar o desmarcar según el valor
+                input.checked = data[key] === true;
+            } 
+            // ===== CASO 2: Campos de texto/número =====
+            else {
+                // Asignar el valor o vacío si no existe
+                input.value = data[key] || '';
             }
-        });
-    }
+        }
+    });
+}
 
-    console.log('✅ maquinas.html cargado correctamente');
+
 </script>
 {% endblock %}
